@@ -1,0 +1,54 @@
+
+# --------------------------------
+# Python temporary files
+# --------------------------------
+__pycache__/
+*.pyc
+*.pyo
+
+# --------------------------------
+# Python virtual environments
+# --------------------------------
+.venv/
+venv/
+env/
+
+# --------------------------------
+# API credentials and secrets
+# --------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --------------------------------
+# Kalshi market data
+# --------------------------------
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# --------------------------------
+# Trained neural network models
+# --------------------------------
+models/*
+!models/.gitkeep
+
+# --------------------------------
+# Jupyter notebooks
+# --------------------------------
+.ipynb_checkpoints/
+
+# --------------------------------
+# VS Code and other IDE files
+# --------------------------------
+.vscode/
+.idea/
+
+# --------------------------------
+# Operating system files
+# --------------------------------
+.DS_Store
+Thumbs.db
