@@ -2,12 +2,11 @@
 
 **Project:** `kalshi-forecasting`  
 **Status:** In development  
-**Current milestone:** Phase 1 — finish dependency verification; then Phase 2 — Kalshi REST client  
+**Current milestone: Phase 2 — Kalshi REST client  
 **Primary prediction target:** Kalshi YES contract price movement over the next **1, 5, and 10 seconds**  
 **Primary stack:** Python 3.12, TensorFlow/Keras Sequential GRU, pandas, NumPy, scikit-learn, WebSockets, FastAPI, React  
 **Operating mode:** Data collection, research, and paper trading first. **Live trading disabled by default.**
 
-> **How to use this file:** Save it as `PROJECT_ROADMAP.md` in the root of your Git repository. Mark finished tasks `[x]`, add notes and evidence, and commit changes. This is the project's ongoing single source of truth. Don't paste secrets or API keys here.
 
 ## Project goals and success criteria
 
@@ -20,18 +19,6 @@
 
 ## Current setup checkpoint
 
-The environment previously used Python 3.15, which was incompatible with the available TensorFlow package. You have since switched toward Python 3.12. TensorFlow, pandas, scikit-learn, and websockets imported, but the combined verification failed because **FastAPI was not installed**. TensorFlow's oneDNN log lines were informational.
-
-- [ ] Activate `.venv` in VS Code, and confirm `python --version` reports Python 3.12.x.
-- [ ] Run `python -m pip install fastapi uvicorn` in the activated environment.
-- [ ] Verify imports:
-  ```powershell
-  python -c "import tensorflow, pandas, sklearn, websockets, fastapi; print('All imports successful')"
-  ```
-- [ ] Ensure `fastapi` and `uvicorn` are in `requirements.txt`.
-- [ ] Run `python -m pip install -r requirements.txt` and confirm it finishes successfully.
-- [ ] Run `git status` and confirm `.env`, `.venv/`, private keys, raw datasets, and trained models are not staged.
-- [ ] Commit setup changes and push to GitHub. If push is rejected, resolve the remote changes with `git pull origin main --rebase` before `git push origin main`; **do not force-push**.
 
 ## Recommended repository structure
 
@@ -114,12 +101,12 @@ Create only the modules you need for the active milestone; the tree is the event
 
 ## Phase 1 — Environment and Git setup
 
-- [ ] Confirm 64-bit Python 3.12 and project `.venv` are selected in VS Code.
-- [ ] Install and import core dependencies: `requests`, `websockets`, `python-dotenv`, `numpy`, `pandas`, `pyarrow`, `scikit-learn`, `tensorflow`, `matplotlib`, `pytest`, `fastapi`, `uvicorn`.
-- [ ] Keep `.env` local and `.env.example` free of credentials.
-- [ ] Ensure `.gitignore` excludes `.venv/`, `.env`, `*.pem`, `*.key`, large data, and model artifacts.
-- [ ] Create `README.md`, this roadmap, initial `src/`, and `tests/`.
-- [ ] Save the initial Git commit and push to your chosen remote.
+- [x] Confirm 64-bit Python 3.12 and project `.venv` are selected in VS Code.
+- [x] Install and import core dependencies: `requests`, `websockets`, `python-dotenv`, `numpy`, `pandas`, `pyarrow`, `scikit-learn`, `tensorflow`, `matplotlib`, `pytest`, `fastapi`, `uvicorn`.
+- [x] Keep `.env` local and `.env.example` free of credentials.
+- [x] Ensure `.gitignore` excludes `.venv/`, `.env`, `*.pem`, `*.key`, large data, and model artifacts.
+- [x] Create `README.md`, this roadmap, initial `src/`, and `tests/`.
+- [x] Save the initial Git commit and push to your chosen remote.
 
 **Done when:** `python --version`, imports, `pytest`, and `git status` run as expected; repository is available on GitHub without secrets.
 
