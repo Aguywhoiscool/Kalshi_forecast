@@ -21,6 +21,7 @@ env/
 !.env.example
 *.pem
 *.key
+secrets/
 
 # --------------------------------
 # Kalshi market data
