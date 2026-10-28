@@ -75,12 +75,17 @@ def fetch_candidates(session, max_pages=MAX_PAGES):
     return all_markets
 
 
-def rank_active_markets(max_markets=MAX_MARKETS, max_pages=MAX_PAGES):
+def rank_active_markets(
+    max_markets=MAX_MARKETS,
+    max_pages=MAX_PAGES,
+    excluded_tickers=None ):
     with requests.Session() as session:
         markets = fetch_candidates(session, max_pages)
-
+    excluded_tickers = set(excluded_tickers or [])
     candidates = []
     for m in markets:
+        if m["ticker"] in excluded_tickers:
+            continue
         if hours_until_close(m) < MIN_HOURS:
             continue
         bid = number(m.get('yes_bid_dollars'))

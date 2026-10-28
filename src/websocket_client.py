@@ -21,10 +21,16 @@ import websockets
 from dotenv import load_dotenv
 
 from src.authentication import get_auth_headers
-from src.market_ranker import rank_active_markets
+from src.market_ranker import (
+    rank_active_markets,
+    series_of,
+    MAX_PER_SERIES,
+)
 from src.data_collector import save_raw_message
 from src.orderbook import OrderBookManager
 from src.feature_sampler import FeatureSampler
+from src.market_activity import MarketActivityTracker
+
 
 
 load_dotenv()
@@ -42,9 +48,20 @@ RECONNECT_MAX_SECONDS = 30
 # Keep at 0 for normal operation.
 TEST_RECONNECT_AFTER_SECONDS = 0
 
+TARGET_MARKETS = 10
+MARKET_COOLDOWN_SECONDS = 1800  # 30 minutes
+REPLACEMENT_CANDIDATES = 50
+
 
 class ResyncRequired(Exception):
     """Raised when the current order books cannot be trusted."""
+
+class MarketRotationRequired(Exception):
+    def __init__(self, rejected_tickers):
+        self.rejected_tickers = set(rejected_tickers)
+        super().__init__(
+            f"Market rotation requested for {len(rejected_tickers)} markets"
+        )
 
 
 async def stream_markets(tickers):
@@ -52,6 +69,13 @@ async def stream_markets(tickers):
 
     # Create a NEW manager for each connection.
     orderbook_manager = OrderBookManager()
+    activity_tracker = MarketActivityTracker(
+        window_seconds=300,
+        min_deltas_per_minute=30
+    )       
+
+    for ticker in tickers:
+        activity_tracker.register_market(ticker)
     feature_sampler = FeatureSampler()
     next_sample = time.monotonic() + 1.0
 
@@ -60,6 +84,7 @@ async def stream_markets(tickers):
 
     connected_since = time.monotonic()
     last_report = connected_since
+    last_market_review = connected_since
 
     # Authentication must be regenerated for each connection.
     auth = get_auth_headers("GET", "/trade-api/ws/v2")
@@ -181,6 +206,7 @@ async def stream_markets(tickers):
 
                 elif kind == "orderbook_delta":
                     counts[ticker] += 1
+                    activity_tracker.record_delta(ticker)
 
                 elif kind == "error":
                     raise ResyncRequired(
@@ -241,41 +267,199 @@ async def stream_markets(tickers):
                         f"snapshot="
                         f"{'yes' if ticker in snapshots else 'no'}"
                     )
-
                 last_report = now
+            # Review market activity every five minutes.
+            if now - last_market_review >= 300:
+                print("\n=== MARKET ACTIVITY REVIEW ===")
+
+                rejected = set()
+
+                for ticker in tickers:
+                    rate = activity_tracker.get_rate(ticker, now=now)
+                    should_rotate = activity_tracker.review_market(
+                        ticker, now=now
+                    )
+
+                    print(
+                        f"{ticker}: "
+                        f"{rate:.1f} deltas/min | "
+                        f"rotate={'YES' if should_rotate else 'NO'}"
+                    )
+
+                    if should_rotate:
+                        rejected.add(ticker)
+
+                last_market_review = now
+
+                if rejected:
+                    raise MarketRotationRequired(rejected)
+
 
 
 async def connect_to_kalshi():
-    """Discover markets and reconnect after stream failures."""
+    """Monitor markets and automatically rotate inactive contracts."""
 
     selected = await asyncio.to_thread(
-        rank_active_markets
+        rank_active_markets,
+        max_markets=TARGET_MARKETS,
     )
 
-    tickers = [
-        market["ticker"]
-        for market in selected
-    ]
-
-    if not tickers:
-        print(
-            "No markets passed filters. "
-            "Adjust discovery settings."
-        )
+    if not selected:
+        print("No eligible markets found.")
         return
+
+    # Ticker -> monotonic time when cooldown expires.
+    cooldowns = {}
 
     reconnect_delay = RECONNECT_INITIAL_SECONDS
 
     while True:
-
+        tickers = [market["ticker"] for market in selected]
         connection_started = time.monotonic()
+        rotation_handled = False
 
         try:
             await stream_markets(tickers)
-
-            # A clean return is unexpected for our
-            # continuously running subscription.
             print("Stream ended. Reconnecting.")
+
+        except MarketRotationRequired as error:
+            rotation_handled = True
+            now = time.monotonic()
+
+            rejected = set(error.rejected_tickers)
+            rejected &= set(tickers)
+
+            print(
+                f"\nROTATION REVIEW: "
+                f"{len(rejected)} inactive markets"
+            )
+
+            # Remove expired cooldown entries.
+            cooldowns = {
+                ticker: expiry
+                for ticker, expiry in cooldowns.items()
+                if expiry > now
+            }
+
+            # Keep productive markets.
+            keep = [
+                market
+                for market in selected
+                if market["ticker"] not in rejected
+            ]
+
+            keep_tickers = {
+                market["ticker"] for market in keep
+            }
+
+            # Avoid rejected and previously rotated markets.
+            blocked = (
+                set(cooldowns)
+                | rejected
+                | keep_tickers
+            )
+
+            try:
+                candidates = await asyncio.to_thread(
+                    rank_active_markets,
+                    max_markets=REPLACEMENT_CANDIDATES,
+                    excluded_tickers=blocked,
+                )
+
+            except Exception as error:
+                print(
+                    f"Replacement discovery failed: {error}"
+                )
+                candidates = []
+
+            # Preserve the original series/event diversity
+            # constraints when choosing replacements.
+            from collections import Counter
+
+            series_counts = Counter(
+                series_of(market) for market in keep
+            )
+
+            used_events = {
+                market.get("event_ticker") or market["ticker"]
+                for market in keep
+            }
+
+            new_selected = list(keep)
+            added = []
+
+            for market in candidates:
+                if len(new_selected) >= TARGET_MARKETS:
+                    break
+
+                ticker = market["ticker"]
+                series = series_of(market)
+                event = market.get("event_ticker") or ticker
+
+                if ticker in blocked:
+                    continue
+
+                if series_counts[series] >= MAX_PER_SERIES:
+                    continue
+
+                if event in used_events:
+                    continue
+
+                new_selected.append(market)
+                added.append(ticker)
+
+                series_counts[series] += 1
+                used_events.add(event)
+
+            # If we cannot fill every slot, retain existing
+            # inactive markets temporarily rather than
+            # selecting duplicates or unsuitable candidates.
+            for market in selected:
+                if len(new_selected) >= TARGET_MARKETS:
+                    break
+
+                ticker = market["ticker"]
+
+                if ticker in rejected:
+                    new_selected.append(market)
+
+            old_tickers = set(tickers)
+            new_tickers = {
+                market["ticker"] for market in new_selected
+            }
+
+            removed = old_tickers - new_tickers
+
+            # Cool down only contracts actually removed.
+            for ticker in removed:
+                cooldowns[ticker] = (
+                    time.monotonic()
+                    + MARKET_COOLDOWN_SECONDS
+                )
+
+            if removed:
+                print("\nMARKETS REMOVED:")
+                for ticker in sorted(removed):
+                    print(" -", ticker)
+
+                print("\nNEW MARKETS:")
+                for ticker in added:
+                    print(" +", ticker)
+
+                selected = new_selected
+
+                print(
+                    f"\nNow monitoring "
+                    f"{len(selected)} markets."
+                )
+            else:
+                print(
+                    "No suitable replacements found. "
+                    "Keeping existing markets."
+                )
+
+            # Return to a fresh WebSocket session.
+            reconnect_delay = RECONNECT_INITIAL_SECONDS
 
         except ResyncRequired as error:
             print(f"\nRESYNC REQUIRED: {error}")
@@ -286,13 +470,12 @@ async def connect_to_kalshi():
             asyncio.TimeoutError,
         ) as error:
             print(
-                f"\nWebSocket connection interrupted: {error}"
+                f"\nWebSocket interrupted: {error}"
             )
 
-        # Don't keep increasing the delay if a connection
-        # successfully ran for a substantial period.
-        if time.monotonic() - connection_started >= 60:
-            reconnect_delay = RECONNECT_INITIAL_SECONDS
+        if not rotation_handled:
+            if time.monotonic() - connection_started >= 60:
+                reconnect_delay = RECONNECT_INITIAL_SECONDS
 
         print(
             f"Reconnecting in {reconnect_delay} seconds..."
@@ -300,10 +483,12 @@ async def connect_to_kalshi():
 
         await asyncio.sleep(reconnect_delay)
 
-        reconnect_delay = min(
-            reconnect_delay * 2,
-            RECONNECT_MAX_SECONDS,
-        )
+        if not rotation_handled:
+            reconnect_delay = min(
+                reconnect_delay * 2,
+                RECONNECT_MAX_SECONDS,
+            )
+
 
 
 if __name__ == "__main__":
