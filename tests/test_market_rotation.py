@@ -93,3 +93,24 @@ def test_unknown_reason_is_rejected():
             rejected=set(),
             reason="unknown",
         )
+
+def test_not_tradable_never_reintroduced():
+    from src.market_rotation import apply_rotation_fallback
+
+    previous = [
+        {"ticker": "MARKET-A"},
+        {"ticker": "MARKET-B"},
+    ]
+
+    result = apply_rotation_fallback(
+        new_selected=[previous[1]],
+        previous_selected=previous,
+        rejected={"MARKET-A"},
+        reason="not_tradable",
+        target_markets=2,
+    )
+
+    tickers = {market["ticker"] for market in result}
+
+    assert "MARKET-A" not in tickers
+    assert "MARKET-B" in tickers

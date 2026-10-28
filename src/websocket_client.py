@@ -490,7 +490,7 @@ async def connect_to_kalshi():
             
             # Only allow inactive (but tradable) markets
             # to remain if replacements are unavailable.
-            if error.reason == "inactive":
+            if error.reason in ("inactive", "not_tradable"):
                 
                 # Apply tested fallback safety rules.
                 new_selected = apply_rotation_fallback(
@@ -529,20 +529,34 @@ async def connect_to_kalshi():
 
                 print("\nNEW MARKETS:")
                 for ticker in added:
-                    print(" +", ticker)
+                    if ticker in new_tickers:
+                        print(" +", ticker)
 
-                selected = new_selected
-
-                print(
-                    f"\nNow monitoring "
-                    f"{len(selected)} markets."
-                )
             else:
                 print(
-                    "No suitable replacements found. "
-                    "Keeping existing markets."
+                    "No market replacements were available."
                 )
 
+            # Always update the selection after rotation.
+            selected = new_selected
+
+            print(
+                f"\nNow monitoring {len(selected)} markets."
+            )
+
+            # Do not reconnect with an empty market selection.
+            if not selected:
+                print(
+                    "No eligible markets remain. "
+                    "Searching for new markets in 60 seconds..."
+                )
+
+                await asyncio.sleep(60)
+
+                selected = await asyncio.to_thread(
+                    rank_active_markets,
+                    max_markets=TARGET_MARKETS,
+                )
             # Return to a fresh WebSocket session.
             reconnect_delay = RECONNECT_INITIAL_SECONDS
 
