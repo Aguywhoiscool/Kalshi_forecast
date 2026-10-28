@@ -2,39 +2,50 @@
 from src.market_activity import MarketActivityTracker
 
 
-
-def test_market_rotation_threshold():
-    tracker = MarketActivityTracker(
-        window_seconds=300,
-        min_deltas_per_minute=30
-    )
-
+def test_inactive_market_rotates():
+    tracker = MarketActivityTracker()
     tracker.register_market("TEST", now=0)
 
-    # Only 10 updates during the first five minutes.
     for i in range(10):
         tracker.record_delta("TEST", now=i * 30)
 
-    # Not eligible before five minutes.
     assert tracker.review_market("TEST", now=299) is False
-
-    # Eligible for rotation at five minutes.
     assert tracker.review_market("TEST", now=300) is True
 
 
-
-def test_active_market_is_not_rotated():
-    tracker = MarketActivityTracker(
-        window_seconds=300,
-        min_deltas_per_minute=60
-    )
-
+def test_active_market_does_not_rotate():
+    tracker = MarketActivityTracker()
     tracker.register_market("ACTIVE", now=0)
 
-    # 100 updates per minute during the last five minutes.
-    for second in range(300, 600):
+    for second in range(300):
         tracker.record_delta("ACTIVE", now=second)
         tracker.record_delta("ACTIVE", now=second + 0.1)
 
-    assert tracker.review_market("ACTIVE", now=600) is False
-    assert tracker.get_rate("ACTIVE", now=600) >= 60
+    assert tracker.get_rate("ACTIVE", now=300) >= 30
+    assert tracker.review_market("ACTIVE", now=300) is False
+
+
+def test_low_activity_with_price_changes_stays():
+    tracker = MarketActivityTracker()
+    tracker.register_market("MOVING", now=0)
+
+    tracker.record_midpoint("MOVING", "0.45", now=0)
+    tracker.record_midpoint("MOVING", "0.46", now=100)
+    tracker.record_midpoint("MOVING", "0.47", now=200)
+
+    assert tracker.get_midpoint_changes("MOVING", now=300) == 2
+    assert tracker.review_market("MOVING", now=300) is False
+
+
+def test_high_deltas_without_price_changes_stays():
+    tracker = MarketActivityTracker()
+    tracker.register_market("BUSY", now=0)
+
+    tracker.record_midpoint("BUSY", "0.50", now=0)
+
+    for second in range(300):
+        tracker.record_delta("BUSY", now=second)
+        tracker.record_midpoint("BUSY", "0.50", now=second)
+
+    assert tracker.get_midpoint_changes("BUSY", now=300) == 0
+    assert tracker.review_market("BUSY", now=300) is False

@@ -30,7 +30,8 @@ from src.data_collector import save_raw_message
 from src.orderbook import OrderBookManager
 from src.feature_sampler import FeatureSampler
 from src.market_activity import MarketActivityTracker
-
+from src.live_market_status import get_live_market_status
+from src.market_rotation import apply_rotation_fallback
 
 
 load_dotenv()
@@ -56,12 +57,18 @@ REPLACEMENT_CANDIDATES = 50
 class ResyncRequired(Exception):
     """Raised when the current order books cannot be trusted."""
 
+
 class MarketRotationRequired(Exception):
-    def __init__(self, rejected_tickers):
+    def __init__(self, rejected_tickers, reason="inactive"):
         self.rejected_tickers = set(rejected_tickers)
+        self.reason = reason
+
         super().__init__(
-            f"Market rotation requested for {len(rejected_tickers)} markets"
+            f"Market rotation requested for "
+            f"{len(self.rejected_tickers)} markets "
+            f"(reason={reason})"
         )
+
 
 
 async def stream_markets(tickers):
@@ -85,7 +92,8 @@ async def stream_markets(tickers):
     connected_since = time.monotonic()
     last_report = connected_since
     last_market_review = connected_since
-
+    last_status_check = connected_since
+    STATUS_CHECK_SECONDS = 60
     # Authentication must be regenerated for each connection.
     auth = get_auth_headers("GET", "/trade-api/ws/v2")
 
@@ -161,8 +169,13 @@ async def stream_markets(tickers):
                         raise ResyncRequired(
                             f"Order-book processing error: {error}"
                         ) from error
-
-                    # Manager detects missing/out-of-order sequences.
+                # Track genuine midpoint changes.
+                    if prices is not None:
+                        activity_tracker.record_midpoint(
+                            ticker,
+                            prices["midpoint"]
+                        )
+                        # Manager detects missing/out-of-order sequences.
                     if orderbook_manager.invalid_subscriptions:
                         raise ResyncRequired(
                             "Sequence gap detected on subscription(s): "
@@ -234,6 +247,49 @@ async def stream_markets(tickers):
                 if next_sample <= now:
                     next_sample = now + 1.0
 
+            
+            # Independently check whether monitored markets
+            # are still open and sufficiently far from closing.
+            if now - last_status_check >= STATUS_CHECK_SECONDS:
+                print("\n=== LIVE MARKET STATUS REVIEW ===")
+
+                closed_markets = set()
+
+                for ticker in tickers:
+                    try:
+                        status = await asyncio.to_thread(
+                            get_live_market_status,
+                            ticker
+                        )
+
+                    except Exception as error:
+                        # A network/API failure does not prove
+                        # a market is closed.
+                        print(
+                            f"{ticker}: STATUS UNKNOWN ({error})"
+                        )
+                        continue
+
+                    if not status["tradable"]:
+                        closed_markets.add(ticker)
+
+                        print(
+                            f"{ticker}: NOT TRADABLE | "
+                            f"status={status['status']} | "
+                            f"close={status['close_time']}"
+                        )
+
+                last_status_check = time.monotonic()
+
+                if closed_markets:
+                    print(
+                        f"Lifecycle rotation requested for "
+                        f"{len(closed_markets)} markets"
+                    )
+                    raise MarketRotationRequired(
+                        closed_markets,
+                        reason="not_tradable"
+                    )
 
             if now - last_report >= REPORT_SECONDS:
 
@@ -268,6 +324,7 @@ async def stream_markets(tickers):
                         f"{'yes' if ticker in snapshots else 'no'}"
                     )
                 last_report = now
+            
             # Review market activity every five minutes.
             if now - last_market_review >= 300:
                 print("\n=== MARKET ACTIVITY REVIEW ===")
@@ -275,14 +332,32 @@ async def stream_markets(tickers):
                 rejected = set()
 
                 for ticker in tickers:
-                    rate = activity_tracker.get_rate(ticker, now=now)
+                    rate = activity_tracker.get_rate(
+                        ticker, now=now
+                    )
+
+                    changes = activity_tracker.get_midpoint_changes(
+                        ticker, now=now
+                    )
+
                     should_rotate = activity_tracker.review_market(
                         ticker, now=now
                     )
 
+                    if rate >= 30 and changes == 0:
+                        status = "HIGH DELTAS / NO PRICE MOVEMENT"
+                    elif rate < 30 and changes > 0:
+                        status = "LOW DELTAS / PRICE MOVING"
+                    elif should_rotate:
+                        status = "INACTIVE"
+                    else:
+                        status = "ACTIVE"
+
                     print(
                         f"{ticker}: "
                         f"{rate:.1f} deltas/min | "
+                        f"{changes} midpoint changes | "
+                        f"{status} | "
                         f"rotate={'YES' if should_rotate else 'NO'}"
                     )
 
@@ -412,16 +487,26 @@ async def connect_to_kalshi():
                 used_events.add(event)
 
             # If we cannot fill every slot, retain existing
-            # inactive markets temporarily rather than
-            # selecting duplicates or unsuitable candidates.
-            for market in selected:
-                if len(new_selected) >= TARGET_MARKETS:
-                    break
+            
+            # Only allow inactive (but tradable) markets
+            # to remain if replacements are unavailable.
+            if error.reason == "inactive":
+                
+                # Apply tested fallback safety rules.
+                new_selected = apply_rotation_fallback(
+                    new_selected=new_selected,
+                    previous_selected=selected,
+                    rejected=rejected,
+                    reason=error.reason,
+                    target_markets=TARGET_MARKETS,
+                )
 
-                ticker = market["ticker"]
 
-                if ticker in rejected:
-                    new_selected.append(market)
+            else:
+                raise ValueError(
+                    f"Unknown rotation reason: {error.reason}"
+                )
+
 
             old_tickers = set(tickers)
             new_tickers = {

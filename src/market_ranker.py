@@ -11,6 +11,8 @@ from decimal import Decimal, InvalidOperation
 import requests
 from dotenv import load_dotenv
 
+from src.market_lifecycle import market_is_tradable
+
 load_dotenv()
 BASE_URL = os.getenv('KALSHI_API_BASE_URL', 'https://external-api.kalshi.com/trade-api/v2').rstrip('/')
 PAGE_LIMIT = 200
@@ -86,6 +88,12 @@ def rank_active_markets(
     for m in markets:
         if m["ticker"] in excluded_tickers:
             continue
+        if not market_is_tradable(
+            m,
+            min_minutes_to_close=60
+        ):
+            continue
+
         if hours_until_close(m) < MIN_HOURS:
             continue
         bid = number(m.get('yes_bid_dollars'))
