@@ -23,7 +23,6 @@ MODEL_DIR = Path(
 SCALER_PATH = Path(
     "models/v2_dev_balanced_capped/feature_scaler.joblib"
 )
-SCALER_PATH = Path("models/v2_dev/feature_scaler.joblib")
 
 EPOCHS = 30
 BATCH_SIZE = 256

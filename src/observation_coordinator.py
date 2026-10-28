@@ -44,8 +44,10 @@ class ObservationCoordinator:
                 excluded_tickers=excluded,
             )
 
-            
             self.candidates = list(candidates)
+
+            # Update this timestamp ONLY when REST discovery runs.
+            self.last_discovery_at = time.monotonic()
 
             print(
                 f"Observer discovery refreshed: "
@@ -58,7 +60,7 @@ class ObservationCoordinator:
                 if market["ticker"] not in excluded
             ]
         if not candidates:
-            self.candidates = []
+            print("Observer: no available candidates in this cycle")
             return
 
         batch = self.probe.next_batch(
@@ -82,9 +84,7 @@ class ObservationCoordinator:
 
             self.probe.commit_batch(candidates, batch)
 
-        self.candidates = candidates
-        self.last_discovery_at = time.monotonic()
-
+        
     def start(self, excluded_tickers=None):
         """Start a new observation task if none is running."""
 
