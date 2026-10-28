@@ -112,13 +112,13 @@ Create only the modules you need for the active milestone; the tree is the event
 
 ## Phase 2 — Kalshi REST API and market discovery
 
-- [ ] Read current **official** Kalshi developer docs: <https://docs.kalshi.com/>.
-- [ ] Check the documented production and demo base URLs before hardcoding any environment setting.
-- [ ] Implement `src/kalshi/rest_client.py` with timeouts, structured errors, and pagination.
-- [ ] Add an unauthenticated request for open markets and print ticker, title, status, and current quote fields.
-- [ ] Implement `market_discovery.py` to select 5–10 markets by recent activity, valid quotes, and liquidity.
-- [ ] Keep selection criteria in configuration instead of hardcoding individual tickers.
-- [ ] Add unit tests with recorded sample responses; don't require live network access to run tests.
+- [x] Read current **official** Kalshi developer docs: <https://docs.kalshi.com/>.
+- [x] Check the documented production and demo base URLs before hardcoding any environment setting.
+- [x] Implement `src/kalshi/rest_client.py` with timeouts, structured errors, and pagination.
+- [x] Add an unauthenticated request for open markets and print ticker, title, status, and current quote fields.
+- [x] Implement `market_discovery.py` to select 5–10 markets by recent activity, valid quotes, and liquidity.
+- [x] Keep selection criteria in configuration instead of hardcoding individual tickers.
+- [x] Add unit tests with recorded sample responses; don't require live network access to run tests.
 
 **Done when:** A single command lists 5–10 appropriate markets reliably and unit tests pass.
 
@@ -126,17 +126,17 @@ Create only the modules you need for the active milestone; the tree is the event
 
 ## Phase 3 — Streaming order books and durable collection
 
-- [ ] Implement authenticated WebSocket connection using current Kalshi requirements and channels.
-- [ ] Handle initial book snapshots and subsequent incremental updates.
-- [ ] Reconstruct order books correctly, including YES/NO complement conventions and valid price increments.
-- [ ] Check sequence continuity if provided; reconnect and resynchronize if data becomes inconsistent.
-- [ ] Record the exact time your machine received each message, plus exchange timestamps if available.
-- [ ] Save the unmodified incoming message or normalized event record **before** aggregation.
-- [ ] Write data to append-only files (e.g., daily Parquet partitions) or a durable database.
-- [ ] Derive 1-second snapshots from the event stream; do not discard raw updates.
-- [ ] Detect stale books, crossed/impossible reconstructed quotes, duplicate messages, and gaps.
-- [ ] Monitor disconnections, data-writing failures, and storage growth.
-- [ ] Collect multiple days across several liquid markets without overwriting earlier data.
+- [x] Implement authenticated WebSocket connection using current Kalshi requirements and channels.
+- [x] Handle initial book snapshots and subsequent incremental updates.
+- [x] Reconstruct order books correctly, including YES/NO complement conventions and valid price increments.
+- [x] Check sequence continuity if provided; reconnect and resynchronize if data becomes inconsistent.
+- [x] Record the exact time your machine received each message, plus exchange timestamps if available.
+- [x] Save the unmodified incoming message or normalized event record **before** aggregation.
+- [x] Write data to append-only files (e.g., daily Parquet partitions) or a durable database.
+- [x] Derive 1-second snapshots from the event stream; do not discard raw updates.
+- [x] Detect stale books, crossed/impossible reconstructed quotes, duplicate messages, and gaps.
+- [x] Monitor disconnections, data-writing failures, and storage growth.
+- [x] Collect multiple days across several liquid markets without overwriting earlier data.
 
 **Done when:** You can stop/restart the collector, reconstruct a valid book, and replay saved records reproducibly without losing earlier data.
 
@@ -144,40 +144,40 @@ Create only the modules you need for the active milestone; the tree is the event
 
 ## Phase 4 — Market features
 
-- [ ] Define a common YES-side representation with explicit executable bid, ask, midpoint, and depth.
-- [ ] Compute spread and available depth at multiple price levels.
-- [ ] Compute order-book imbalance `(bid_depth - ask_depth) / (bid_depth + ask_depth)` with zero-depth handling.
-- [ ] Compute recent returns over 1, 5, 10, and 30 seconds.
-- [ ] Compute short-term volatility and rolling statistics without peeking forward.
-- [ ] Compute trade rate, volume, order additions/cancellations when data supports them.
-- [ ] Include time since most recent genuine market update; mark stale/closed markets.
-- [ ] Represent market-specific tick sizes explicitly.
-- [ ] Handle irregular event time and repeated unchanged snapshots.
-- [ ] Fit standardization **only on training data**, transform validation/test data with those fitted parameters.
-- [ ] Preserve both original and transformed values for debugging.
+- [x] Define a common YES-side representation with explicit executable bid, ask, midpoint, and depth.
+- [x] Compute spread and available depth at multiple price levels.
+- [x] Compute order-book imbalance `(bid_depth - ask_depth) / (bid_depth + ask_depth)` with zero-depth handling.
+- [x] Compute recent returns over 1, 5, 10, and 30 seconds.
+- [x] Compute short-term volatility and rolling statistics without peeking forward.
+- [x] Compute trade rate, volume, order additions/cancellations when data supports them.
+- [x] Include time since most recent genuine market update; mark stale/closed markets.
+- [x] Represent market-specific tick sizes explicitly.
+- [x] Handle irregular event time and repeated unchanged snapshots.
+- [x] Fit standardization **only on training data**, transform validation/test data with those fitted parameters.
+- [x] Preserve both original and transformed values for debugging.
 
 **Done when:** Every feature has a documented formula, expected units, and tests for edge cases.
 
 ## Phase 5 — Forecast labels and dataset
 
-- [ ] Pick a price definition **before** modeling: start with YES midpoint where both sides exist.
-- [ ] Define target horizons of 1, 5, and 10 seconds.
-- [ ] Label DOWN / FLAT / UP by change in valid ticks (or define continuous returns as a separate experiment).
-- [ ] Use the book as of the precise future cutoff; never accidentally select later information.
-- [ ] Construct rolling sequences, e.g., 60 timesteps × 12 features.
-- [ ] Mark gaps and incomplete sequences rather than silently backfilling from the future.
-- [ ] Split chronologically with an embargo around boundaries; group related contracts/events to prevent leakage.
-- [ ] Preserve an untouched final test set and separately track class balance by market.
-- [ ] Record metadata, dataset version, feature definition, and split timestamps.
+- [x] Pick a price definition **before** modeling: start with YES midpoint where both sides exist.
+- [x] Define target horizons of 1, 5, and 10 seconds.
+- [x] Label DOWN / FLAT / UP by change in valid ticks (or define continuous returns as a separate experiment).
+- [x] Use the book as of the precise future cutoff; never accidentally select later information.
+- [x] Construct rolling sequences, e.g., 60 timesteps × 12 features.
+- [x] Mark gaps and incomplete sequences rather than silently backfilling from the future.
+- [x] Split chronologically with an embargo around boundaries; group related contracts/events to prevent leakage.
+- [x] Preserve an untouched final test set and separately track class balance by market.
+- [x] Record metadata, dataset version, feature definition, and split timestamps.
 
 **Done when:** A deterministic dataset-build script emits `(samples, timesteps, features)` plus labels and reproducible split manifests.
 
 ## Phase 6 — Baselines first
 
-- [ ] Always-FLAT baseline.
-- [ ] Recent price-momentum baseline.
-- [ ] Order-book imbalance threshold baseline.
-- [ ] Logistic regression using engineered summary features.
+- [x] Always-FLAT baseline.
+- [x] Recent price-momentum baseline.
+- [x] Order-book imbalance threshold baseline.
+- [x] Logistic regression using engineered summary features.
 - [ ] Optional gradient-boosted trees.
 - [ ] Evaluate each model on identical chronological holdouts.
 - [ ] Report confusion matrix, balanced accuracy, class precision/recall, multiclass Brier score, log loss, and calibration.

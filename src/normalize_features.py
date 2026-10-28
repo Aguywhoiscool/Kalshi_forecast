@@ -12,16 +12,32 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 
-SPLIT_DIR = Path("data/processed/splits")
-MODEL_DIR = Path("models")
+import os
+
+DATASET_VERSION = os.getenv("DATASET_VERSION", "v1")
+
+if DATASET_VERSION == "v2":
+    SPLIT_DIR = Path("data/processed/datasets/v2/splits")
+    MODEL_DIR = Path("models/v2")
+else:
+    SPLIT_DIR = Path("data/processed/splits")
+    MODEL_DIR = Path("models")
+
 BATCH_SIZE = 1000
 
 
 def main():
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-    train_path = SPLIT_DIR / "train.npz"
+train_path = SPLIT_DIR / "train.npz"
 
+if not train_path.exists():
+    raise FileNotFoundError(
+        f"Training split not found: {train_path}. "
+        "Build the versioned dataset before fitting a scaler."
+    )
+
+with np.load(train_path) as dataset:
     with np.load(train_path) as dataset:
         X_train = dataset["X"]
         feature_names = dataset["feature_names"]
@@ -45,6 +61,12 @@ def main():
         scaler.partial_fit(flat_batch)
 
     output_path = MODEL_DIR / "feature_scaler.joblib"
+
+if output_path.exists():
+    raise FileExistsError(
+        f"Scaler already exists: {output_path}. "
+        "Refusing to overwrite an existing scaler."
+    )
 
     joblib.dump(scaler, output_path)
 

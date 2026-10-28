@@ -1,0 +1,783 @@
+{
+  "entries": {
+    "KXTSAD-26OCT28-T2200000": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXTSAD-26OCT28-T2200000",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 7.0,
+        "last_spread_cents": 7.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDDE-26OCT29-3.9600": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDDE-26OCT29-3.9600",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 9,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDAL-26OCT29-3.7750": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDAL-26OCT29-3.7750",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 2,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 54.0,
+        "last_spread_cents": 54.0,
+        "spread_sample_count": 3,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXWORLDNEWSMENTION-26OCT28-BOLS": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXWORLDNEWSMENTION-26OCT28-BOLS",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 6,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 2.0,
+        "last_spread_cents": 2.0,
+        "spread_sample_count": 7,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXATPMATCH-26OCT29NORMED-MED": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXATPMATCH-26OCT29NORMED-MED",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 1,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 2,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXSCOTTISHPREMTOTAL-26OCT28CELDUU-9": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXSCOTTISHPREMTOTAL-26OCT28CELDUU-9",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    },
+    "KXEUROLEAGUESPREAD-26OCT281500KPBASV-ASV3": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXEUROLEAGUESPREAD-26OCT281500KPBASV-ASV3",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    },
+    "KXITFMATCH-26OCT29INUSUK-SUK": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXITFMATCH-26OCT29INUSUK-SUK",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXWTACHALLENGERMATCH-26OCT28JANMAN-MAN": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXWTACHALLENGERMATCH-26OCT28JANMAN-MAN",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 9,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 10,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXDWTSELIMINATION-26NOV03-TAT": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXDWTSELIMINATION-26NOV03-TAT",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 2,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 3.0,
+        "last_spread_cents": 3.0,
+        "spread_sample_count": 3,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXKNVBCUPTOTAL-26OCT28VVSECH-8": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXKNVBCUPTOTAL-26OCT28VVSECH-8",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    },
+    "KXEREDIVISIETOTAL-26OCT31PSVWIL-1": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXEREDIVISIETOTAL-26OCT31PSVWIL-1",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDUT-26OCT29-4.6200": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDUT-26OCT29-4.6200",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 2,
+        "midpoint_changes": 1,
+        "meaningful_changes": 1,
+        "spread_cents": 18.0,
+        "last_spread_cents": 20.0,
+        "spread_sample_count": 3,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDAR-26OCT29-3.8150": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDAR-26OCT29-3.8150",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 13,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 5.0,
+        "last_spread_cents": 5.0,
+        "spread_sample_count": 14,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDIA-26OCT29-4.1200": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDIA-26OCT29-4.1200",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 8,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 5.0,
+        "last_spread_cents": 5.0,
+        "spread_sample_count": 9,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNHLAST-26OCT28CGYEDM-EDMCMCDAVID97-2": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXNHLAST-26OCT28CGYEDM-EDMCMCDAVID97-2",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 2,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 3,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXATPCHALLENGERMATCH-26OCT28SAKWON-SAK": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXATPCHALLENGERMATCH-26OCT28SAKWON-SAK",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 3,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 4,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXITFWMATCH-26OCT28YANWAN-YAN": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXITFWMATCH-26OCT28YANWAN-YAN",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 1,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 2,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXATPGSPREAD-26OCT29SHEKYM-SHE3": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXATPGSPREAD-26OCT29SHEKYM-SHE3",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 4,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 5,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDCT-26OCT29-4.2700": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDCT-26OCT29-4.2700",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 4,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 60.0,
+        "last_spread_cents": 60.0,
+        "spread_sample_count": 5,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDNH-26OCT29-4.1850": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDNH-26OCT29-4.1850",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 5,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 6.0,
+        "last_spread_cents": 6.0,
+        "spread_sample_count": 6,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDKY-26OCT29-3.9500": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDKY-26OCT29-3.9500",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 2,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 17.0,
+        "last_spread_cents": 17.0,
+        "spread_sample_count": 3,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDWV-26OCT29-4.1900": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDWV-26OCT29-4.1900",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 5,
+        "midpoint_changes": 4,
+        "meaningful_changes": 4,
+        "spread_cents": 32.0,
+        "last_spread_cents": 10.0,
+        "spread_sample_count": 6,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXLIGAPROMATCH-26OCT281630DENKOR-DEN": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXLIGAPROMATCH-26OCT281630DENKOR-DEN",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    },
+    "KXDOTA2GAME-26OCT291100TYPARI-TY": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXDOTA2GAME-26OCT291100TYPARI-TY",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXITFMATCH-26OCT29BURBES-BES": {
+      "observed_at": "2026-10-28T21:57:27.173621+00:00",
+      "observation": {
+        "ticker": "KXITFMATCH-26OCT29BURBES-BES",
+        "valid_seconds": 119.813,
+        "total_seconds": 120.016,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.813,
+        "delta_count": 23,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 24,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDOK-26OCT29-3.8850": {
+      "observed_at": "2026-10-28T21:57:27.173621+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDOK-26OCT29-3.8850",
+        "valid_seconds": 119.813,
+        "total_seconds": 120.016,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.813,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 8.0,
+        "last_spread_cents": 8.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDNV-26OCT29-5.2550": {
+      "observed_at": "2026-10-28T21:57:27.173621+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDNV-26OCT29-5.2550",
+        "valid_seconds": 119.813,
+        "total_seconds": 120.016,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.813,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 9.0,
+        "last_spread_cents": 9.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDID-26OCT29-4.6050": {
+      "observed_at": "2026-10-28T21:57:27.173621+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDID-26OCT29-4.6050",
+        "valid_seconds": 119.813,
+        "total_seconds": 120.016,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.813,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXDFBPOKALTOTAL-26OCT28BMUFCM-7": {
+      "observed_at": "2026-10-28T21:57:27.173621+00:00",
+      "observation": {
+        "ticker": "KXDFBPOKALTOTAL-26OCT28BMUFCM-7",
+        "valid_seconds": 119.813,
+        "total_seconds": 120.016,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.813,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    },
+    "KXNHLAST-26OCT28NJCOL-COLCMAKAR8-1": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXNHLAST-26OCT28NJCOL-COLCMAKAR8-1",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNFLTD-26NOV01TENCIN-TENEAYOMANOR5-2": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXNFLTD-26NOV01TENCIN-TENEAYOMANOR5-2",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNBA2D-26OCT28OKCDAL-OKCIHARTENSTEIN55": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXNBA2D-26OCT28OKCDAL-OKCIHARTENSTEIN55",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 17,
+        "midpoint_changes": 3,
+        "meaningful_changes": 3,
+        "spread_cents": 3.0,
+        "last_spread_cents": 3.0,
+        "spread_sample_count": 18,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNBAAST-26OCT28GSWMIN-GSWBPODZIEMSKI2-4": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXNBAAST-26OCT28GSWMIN-GSWBPODZIEMSKI2-4",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 5,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 6,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNHLSAVE-26OCT28NJCOL-COLMBLACKWOOD39-27": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXNHLSAVE-26OCT28NJCOL-COLMBLACKWOOD39-27",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 4.0,
+        "last_spread_cents": 4.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNBA2D-26OCT28SASUTA-SASVWEMBANYAMA1": {
+      "observed_at": "2026-10-28T21:55:12.139336+00:00",
+      "observation": {
+        "ticker": "KXNBA2D-26OCT28SASUTA-SASVWEMBANYAMA1",
+        "valid_seconds": 119.843,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.188,
+        "duration_seconds": 119.843,
+        "delta_count": 11,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 12,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXLASTWORDMENTION-26OCT28-NQE": {
+      "observed_at": "2026-10-28T21:57:27.173621+00:00",
+      "observation": {
+        "ticker": "KXLASTWORDMENTION-26OCT28-NQE",
+        "valid_seconds": 119.813,
+        "total_seconds": 120.016,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.813,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 2.0,
+        "last_spread_cents": 2.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXAAAGASDNM-26OCT29-4.1300": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXAAAGASDNM-26OCT29-4.1300",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 6.0,
+        "last_spread_cents": 6.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNFLNEXTTEAM-26JSWEAT10-CHI": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXNFLNEXTTEAM-26JSWEAT10-CHI",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 5.0,
+        "last_spread_cents": 5.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXEUROLEAGUETOTAL-26OCT281530ZALVIB-170": {
+      "observed_at": "2026-10-28T21:52:57.116220+00:00",
+      "observation": {
+        "ticker": "KXEUROLEAGUETOTAL-26OCT281530ZALVIB-170",
+        "valid_seconds": 119.828,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.828,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    },
+    "KXFIBACHAMPSPREAD-26OCT281500BILALBA-ALBA3": {
+      "observed_at": "2026-10-28T21:57:27.173621+00:00",
+      "observation": {
+        "ticker": "KXFIBACHAMPSPREAD-26OCT281500BILALBA-ALBA3",
+        "valid_seconds": 119.813,
+        "total_seconds": 120.016,
+        "valid_coverage": 0.9983,
+        "first_valid_delay": 0.203,
+        "duration_seconds": 119.813,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": null,
+        "last_spread_cents": null,
+        "spread_sample_count": 0,
+        "valid_book": false,
+        "snapshot_received": true
+      }
+    }
+  }
+}

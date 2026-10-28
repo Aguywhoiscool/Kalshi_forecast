@@ -17,7 +17,16 @@ def apply_rotation_fallback(
     reason: "inactive" or "not_tradable"
     """
 
-    if reason not in ("inactive", "not_tradable", "wide_spread"):
+    # Markets rejected for lifecycle, spread, or quote-quality
+    # reasons must never be restored by fallback.
+    if reason in ("not_tradable", "wide_spread", "one_sided"):
+        return [
+            market
+            for market in new_selected
+            if market["ticker"] not in rejected
+        ]
+
+    if reason != "inactive":
         raise ValueError(f"Unknown rotation reason: {reason}")
 
     rejected = set(rejected)
