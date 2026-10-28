@@ -55,17 +55,26 @@ class MarketObservationCache:
 
         return entry["observation"]
 
-    def update(self, observations, now=None):
-        now = utc_now() if now is None else now
+    def update(self, observations, now=None, observed_at=None):
+        """Store observations using their actual observation timestamp."""
+
+        timestamp = (
+            observed_at
+            if observed_at is not None
+            else (utc_now() if now is None else now)
+        )
 
         for ticker, observation in observations.items():
             self.entries[ticker] = {
-                "observed_at": now.isoformat(),
+                "observed_at": timestamp.isoformat(),
                 "observation": observation,
             }
 
-        self.prune(now)
+        # Use the supplied timestamp, not the system clock.
+        # This keeps historical tests deterministic.
+        self.prune(now=timestamp)
         self.save()
+
 
     def prune(self, now=None):
         now = utc_now() if now is None else now

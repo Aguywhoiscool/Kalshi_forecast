@@ -17,7 +17,7 @@ def apply_rotation_fallback(
     reason: "inactive" or "not_tradable"
     """
 
-    if reason not in ("inactive", "not_tradable"):
+    if reason not in ("inactive", "not_tradable", "wide_spread"):
         raise ValueError(f"Unknown rotation reason: {reason}")
 
     rejected = set(rejected)
@@ -25,7 +25,7 @@ def apply_rotation_fallback(
 
     # Never allow a rejected market back if Kalshi
     # confirmed that it is nontradable.
-    if reason == "not_tradable":
+    if reason in ("not_tradable", "wide_spread"):
         result = [
             market for market in result
             if market["ticker"] not in rejected

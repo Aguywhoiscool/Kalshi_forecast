@@ -32,7 +32,13 @@ from src.feature_sampler import FeatureSampler
 from src.market_activity import MarketActivityTracker
 from src.live_market_status import get_live_market_status
 from src.market_rotation import apply_rotation_fallback
-
+from src.observation_coordinator import ObservationCoordinator
+from src.activity_candidate_pool import (
+    prioritize_rotation_candidates,
+)
+from src.spread_quality_tracker import SpreadQualityTracker
+from src.quote_quality import classify_quote
+from src.one_sided_quote_tracker import OneSidedQuoteTracker
 
 load_dotenv()
 
@@ -53,7 +59,16 @@ TARGET_MARKETS = 10
 MARKET_COOLDOWN_SECONDS = 1800  # 30 minutes
 REPLACEMENT_CANDIDATES = 50
 
-
+# Activity-aware candidate observation.
+# Shadow mode observes replacements but does not select them.
+ACTIVITY_OBSERVER_ENABLED = (
+    os.getenv("ACTIVITY_OBSERVER_ENABLED", "0") == "1"
+)
+# Controls whether activity-qualified candidates affect rotation.
+# Defaults to off, even when the observer is running.
+ACTIVITY_ROTATION_ENABLED = (
+    os.getenv("ACTIVITY_ROTATION_ENABLED", "0") == "1"
+)
 class ResyncRequired(Exception):
     """Raised when the current order books cannot be trusted."""
 
@@ -79,13 +94,23 @@ async def stream_markets(tickers):
     activity_tracker = MarketActivityTracker(
         window_seconds=300,
         min_deltas_per_minute=30
-    )       
+    )
+    spread_tracker = SpreadQualityTracker(
+        max_spread_cents=10.0,
+        persistence_seconds=60.0,
+        max_update_age_seconds=15.0,
+    )   
 
     for ticker in tickers:
         activity_tracker.register_market(ticker)
     feature_sampler = FeatureSampler()
     next_sample = time.monotonic() + 1.0
-
+    one_sided_tracker = OneSidedQuoteTracker(
+    persistence_seconds=60.0
+    )
+    last_sample_time = None
+    sampling_delays = 0
+    largest_sampling_gap = 0.0
     counts = Counter()
     snapshots = set()
 
@@ -173,7 +198,20 @@ async def stream_markets(tickers):
                     if prices is not None:
                         activity_tracker.record_midpoint(
                             ticker,
-                            prices["midpoint"]
+                            prices["midpoint"],
+                        )
+
+                        # Order-book spreads are denominated in dollars.
+                        # Convert to cents for SpreadQualityTracker.
+                        spread = prices.get("spread")
+
+                        spread_tracker.record_spread(
+                            ticker,
+                            (
+                                float(spread) * 100
+                                if spread is not None
+                                else None
+                            ),
                         )
                         # Manager detects missing/out-of-order sequences.
                     if orderbook_manager.invalid_subscriptions:
@@ -234,6 +272,38 @@ async def stream_markets(tickers):
             
             # Save one-second features from reconstructed books.
             if now >= next_sample:
+
+                if last_sample_time is not None:
+                    sample_gap = now - last_sample_time
+
+                    if sample_gap > 1.5:
+                        sampling_delays += 1
+                        largest_sampling_gap = max(
+                            largest_sampling_gap,
+                            sample_gap,
+                        )
+
+                        print(
+                            f"\nSAMPLING DELAY: "
+                            f"{sample_gap:.2f}s between samples | "
+                            f"total_delays={sampling_delays} | "
+                            f"largest={largest_sampling_gap:.2f}s"
+                        )
+
+                last_sample_time = now
+                
+                # Inspect quote availability once per sampling tick.
+                # Do not start a one-sided timer before the first snapshot.
+                for ticker in tickers:
+                    prices = orderbook_manager.get_prices(ticker)
+
+                    one_sided_tracker.update(
+                        ticker=ticker,
+                        has_snapshot=ticker in snapshots,
+                        prices=prices,
+                        now=now,
+                    )
+
                 feature_sampler.record(
                     orderbook_manager,
                     tickers
@@ -253,20 +323,27 @@ async def stream_markets(tickers):
             if now - last_status_check >= STATUS_CHECK_SECONDS:
                 print("\n=== LIVE MARKET STATUS REVIEW ===")
 
+                
                 closed_markets = set()
 
-                for ticker in tickers:
-                    try:
-                        status = await asyncio.to_thread(
+                # Run REST requests concurrently rather than
+                # waiting for each market sequentially.
+                status_results = await asyncio.gather(
+                    *[
+                        asyncio.to_thread(
                             get_live_market_status,
-                            ticker
+                            ticker,
                         )
+                        for ticker in tickers
+                    ],
+                    return_exceptions=True,
+                )
 
-                    except Exception as error:
-                        # A network/API failure does not prove
-                        # a market is closed.
+                for ticker, status in zip(tickers, status_results):
+
+                    if isinstance(status, BaseException):
                         print(
-                            f"{ticker}: STATUS UNKNOWN ({error})"
+                            f"{ticker}: STATUS UNKNOWN ({status})"
                         )
                         continue
 
@@ -278,6 +355,7 @@ async def stream_markets(tickers):
                             f"status={status['status']} | "
                             f"close={status['close_time']}"
                         )
+
 
                 last_status_check = time.monotonic()
 
@@ -298,9 +376,26 @@ async def stream_markets(tickers):
                     1,
                 )
 
-                valid_books = sum(
-                    orderbook_manager.get_prices(ticker) is not None
+                quote_quality = {
+                    ticker: classify_quote(
+                        orderbook_manager.get_prices(ticker)
+                    )
                     for ticker in tickers
+                }
+
+                valid_books = sum(
+                    quality["structurally_valid"]
+                    for quality in quote_quality.values()
+                )
+
+                two_sided_books = sum(
+                    quality["two_sided"]
+                    for quality in quote_quality.values()
+                )
+
+                training_books = sum(
+                    quality["training_quality"]
+                    for quality in quote_quality.values()
                 )
 
                 print(
@@ -309,8 +404,18 @@ async def stream_markets(tickers):
                 )
 
                 print(
-                    f"Valid order books: "
+                    f"Structurally valid books: "
                     f"{valid_books}/{len(tickers)}"
+                )
+
+                print(
+                    f"Two-sided quoted books: "
+                    f"{two_sided_books}/{len(tickers)}"
+                )
+
+                print(
+                    f"Training-quality books (spread <= 10c): "
+                    f"{training_books}/{len(tickers)}"
                 )
 
                 for ticker in tickers:
@@ -330,6 +435,8 @@ async def stream_markets(tickers):
                 print("\n=== MARKET ACTIVITY REVIEW ===")
 
                 rejected = set()
+                spread_rejected = set()
+                one_sided_rejected = set()
 
                 for ticker in tickers:
                     rate = activity_tracker.get_rate(
@@ -339,17 +446,63 @@ async def stream_markets(tickers):
                     changes = activity_tracker.get_midpoint_changes(
                         ticker, now=now
                     )
+                    meaningful_changes = (
+                        activity_tracker.get_meaningful_midpoint_changes(
+                            ticker, now=now
+                        )
+                    )
 
                     should_rotate = activity_tracker.review_market(
                         ticker, now=now
                     )
 
-                    if rate >= 30 and changes == 0:
-                        status = "HIGH DELTAS / NO PRICE MOVEMENT"
-                    elif rate < 30 and changes > 0:
-                        status = "LOW DELTAS / PRICE MOVING"
+                    spread_status = spread_tracker.get_status(
+                        ticker, now=now
+                    )
+                    one_sided_status = one_sided_tracker.get_status(ticker)
+
+                    one_sided_rotation = one_sided_status["should_rotate"]
+
+                    print(
+                        f"  QUOTE CHECK {ticker}: "
+                        f"one_sided={one_sided_status['one_sided']} | "
+                        f"seconds={one_sided_status['one_sided_seconds']:.1f} | "
+                        f"rotate={'YES' if one_sided_rotation else 'NO'}"
+                    )
+                    wide_spread_rotation = spread_status["should_rotate"]
+                    if (
+                        ACTIVITY_ROTATION_ENABLED
+                        and wide_spread_rotation
+                    ):
+                        should_rotate = True
+                        spread_rejected.add(ticker)
+                    spread_value = spread_status["spread_cents"]
+
+                    spread_text = (
+                        f"{spread_value:.1f}c"
+                        if spread_value is not None
+                        else "unavailable"
+                    )
+
+                    print(
+                        f"  SPREAD CHECK {ticker}: "
+                        f"spread={spread_text} | "
+                        f"wide_seconds={spread_status['wide_seconds']:.0f} | "
+                        f"stale={spread_status['stale']} | "
+                        f"wide_rotation={'YES' if wide_spread_rotation else 'NO'}"
+                    )
+                    if ACTIVITY_ROTATION_ENABLED and one_sided_rotation:
+                        should_rotate = True
+                        one_sided_rejected.add(ticker)
+                    if ticker in spread_rejected:
+                        status = "PERSISTENT WIDE SPREAD"
                     elif should_rotate:
-                        status = "INACTIVE"
+                        if rate >= 30:
+                            status = "HIGH DELTAS / NO PRICE MOVEMENT"
+                        else:
+                            status = "INACTIVE / NO PRICE MOVEMENT"
+                    elif rate < 30:
+                        status = "LOW DELTAS / PRICE MOVING"
                     else:
                         status = "ACTIVE"
 
@@ -357,17 +510,28 @@ async def stream_markets(tickers):
                         f"{ticker}: "
                         f"{rate:.1f} deltas/min | "
                         f"{changes} midpoint changes | "
+                        f"{meaningful_changes} meaningful changes (>=0.5c) | "
                         f"{status} | "
                         f"rotate={'YES' if should_rotate else 'NO'}"
                     )
-
+                    
                     if should_rotate:
                         rejected.add(ticker)
 
                 last_market_review = now
 
                 if rejected:
-                    raise MarketRotationRequired(rejected)
+                    if spread_rejected:
+                        reason = "wide_spread"
+                    elif one_sided_rejected:
+                        reason = "one_sided"
+                    else:
+                        reason = "inactive"
+
+                    raise MarketRotationRequired(
+                        rejected,
+                        reason=reason,
+                    )
 
 
 
@@ -385,13 +549,51 @@ async def connect_to_kalshi():
 
     # Ticker -> monotonic time when cooldown expires.
     cooldowns = {}
-
+    coordinator = (
+        ObservationCoordinator(
+            candidate_count=80,
+            batch_size=20,
+            observation_seconds=120,
+        )
+        if (
+        ACTIVITY_OBSERVER_ENABLED
+        or ACTIVITY_ROTATION_ENABLED
+        )
+        else None
+    )
     reconnect_delay = RECONNECT_INITIAL_SECONDS
 
     while True:
         tickers = [market["ticker"] for market in selected]
         connection_started = time.monotonic()
         rotation_handled = False
+        
+        if coordinator is not None:
+
+            def get_observer_exclusions():
+                now = time.monotonic()
+
+                exclusions = {
+                    ticker
+                    for ticker, expiry in cooldowns.items()
+                    if expiry > now
+                }
+
+                exclusions.update(
+                    market["ticker"]
+                    for market in selected
+                )
+
+                return exclusions
+
+            started = coordinator.start_continuous(
+                get_excluded_tickers=get_observer_exclusions
+            )
+
+            if started:
+                print(
+                    "Continuous activity observer started."
+                )
 
         try:
             await stream_markets(tickers)
@@ -406,7 +608,8 @@ async def connect_to_kalshi():
 
             print(
                 f"\nROTATION REVIEW: "
-                f"{len(rejected)} inactive markets"
+                f"{len(rejected)} markets flagged for rotation "
+                f"(reason={error.reason})"
             )
 
             # Remove expired cooldown entries.
@@ -434,18 +637,88 @@ async def connect_to_kalshi():
                 | keep_tickers
             )
 
-            try:
-                candidates = await asyncio.to_thread(
-                    rank_active_markets,
-                    max_markets=REPLACEMENT_CANDIDATES,
-                    excluded_tickers=blocked,
+            candidates = []
+            qualified_tickers = set()
+
+            if ACTIVITY_ROTATION_ENABLED and coordinator is not None:
+                # Prefer the already discovered candidate pool.
+                shared_candidates = coordinator.get_candidates()
+                fresh = coordinator.cache.fresh_observations(
+                    [m["ticker"] for m in shared_candidates]
                 )
 
-            except Exception as error:
-                print(
-                    f"Replacement discovery failed: {error}"
+                observations = (
+                    fresh.values()
+                    if isinstance(fresh, dict)
+                    else fresh
                 )
-                candidates = []
+
+                moving_count = sum(
+                    obs.get("midpoint_changes", 0) > 0
+                    for obs in observations
+                )
+
+                print(
+                    "\nOBSERVER AVAILABILITY:"
+                    f"\n  Shared candidates: {len(shared_candidates)}"
+                    f"\n  Fresh observations: {len(fresh)}"
+                    f"\n  Moving markets: {moving_count}"
+                )
+                if shared_candidates:
+                    try:
+                        priority = prioritize_rotation_candidates(
+                            candidates=shared_candidates,
+                            cache=coordinator.cache,
+                            existing_markets=keep,
+                            blocked_tickers=blocked,
+                            target_markets=TARGET_MARKETS,
+                        )
+
+                        candidates = priority["candidates"]
+                        qualified_tickers = priority["qualified_tickers"]
+
+                        print(
+                            "\nACTIVITY-AWARE ROTATION:"
+                            f"\n  Shared REST candidates: {len(shared_candidates)}"
+                            f"\n  Preferred spread candidates: {priority['preferred_count']}"
+                            f"\n  Secondary spread candidates: {priority['secondary_count']}"
+                            f"\n  Rejected for spread: {priority['spread_rejected_count']}"
+                            f"\n  Qualified replacements: {len(qualified_tickers)}"
+                            f"\n  Activity shortage: {priority['activity_shortage']}"
+                        )
+
+                    except Exception as selection_error:
+                        print(
+                            "Activity candidate selection failed: "
+                            f"{selection_error}"
+                        )
+                        candidates = []
+
+                if coordinator.last_error:
+                    print(
+                        "Activity observer error: "
+                        f"{coordinator.last_error}"
+                    )
+
+            # Existing REST discovery remains the safety fallback.
+            if not candidates:
+                print(
+                    "Using standard REST replacement discovery."
+                )
+
+                try:
+                    candidates = await asyncio.to_thread(
+                        rank_active_markets,
+                        max_markets=REPLACEMENT_CANDIDATES,
+                        excluded_tickers=blocked,
+                    )
+
+                except Exception as discovery_error:
+                    print(
+                        "Replacement discovery failed: "
+                        f"{discovery_error}"
+                    )
+                    candidates = []
 
             # Preserve the original series/event diversity
             # constraints when choosing replacements.
@@ -479,6 +752,47 @@ async def connect_to_kalshi():
 
                 if event in used_events:
                     continue
+                # Revalidate before adding a cached candidate.
+                if ACTIVITY_ROTATION_ENABLED:
+                    try:
+                        live_status = await asyncio.to_thread(
+                            get_live_market_status,
+                            ticker,
+                        )
+                    except Exception as status_error:
+                        print(
+                            f"Skipping {ticker}: "
+                            f"live status unavailable ({status_error})"
+                        )
+                        continue
+
+                    if not live_status["tradable"]:
+                        print(
+                            f"Skipping {ticker}: no longer tradable"
+                        )
+                        continue
+                    current_spread = live_status.get("spread_cents")
+
+                    if current_spread is None:
+                        print(
+                            f"Skipping {ticker}: current spread unavailable"
+                        )
+                        continue
+
+                    if current_spread > 10.0:
+                        print(
+                            f"Skipping {ticker}: current spread "
+                            f"{current_spread:.1f}c exceeds 10c"
+                        )
+                        continue
+                if ticker in qualified_tickers:
+                    print(
+                        f"ACTIVITY-QUALIFIED REPLACEMENT: {ticker}"
+                    )
+                elif ACTIVITY_ROTATION_ENABLED:
+                    print(
+                        f"REST FALLBACK REPLACEMENT: {ticker}"
+                    )
 
                 new_selected.append(market)
                 added.append(ticker)
@@ -490,7 +804,12 @@ async def connect_to_kalshi():
             
             # Only allow inactive (but tradable) markets
             # to remain if replacements are unavailable.
-            if error.reason in ("inactive", "not_tradable"):
+            if error.reason in (
+                "inactive",
+                "not_tradable",
+                "wide_spread",
+                "one_sided",
+            ):
                 
                 # Apply tested fallback safety rules.
                 new_selected = apply_rotation_fallback(

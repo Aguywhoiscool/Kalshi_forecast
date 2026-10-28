@@ -28,7 +28,7 @@ from src.activity_market_ranker import (
 from src.market_observation_cache import MarketObservationCache
 from src.market_probe_batch import MarketProbeBatch
 from src.observation_quality import BookCoverageTracker
-
+from datetime import datetime, timezone
 load_dotenv()
 
 WS_URL = os.getenv(
@@ -265,14 +265,18 @@ async def main():
         batch_tickers = [
             market["ticker"] for market in batch
         ]
-
+        observation_started_at = datetime.now(timezone.utc)
         new_observations = await observe_markets(
             batch_tickers,
             duration_seconds=OBSERVATION_SECONDS,
         )
 
         # Cache only after observation completes successfully.
-        cache.update(new_observations)
+        cache.update(
+            new_observations,
+            observed_at=observation_started_at,
+        )
+        probe.commit_batch(candidates, batch)
     else:
         print("No uncached candidates available.")
 

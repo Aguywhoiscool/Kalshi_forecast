@@ -19,7 +19,18 @@ def extract_features(prices):
     )):
         return None
 
-    if ask < bid:
+        # Require a valid, strictly positive bid-ask spread.
+    if not (
+        Decimal("0") <= bid < ask <= Decimal("1")
+    ):
+        return None
+
+    # Reject invalid or missing midpoint/spread values.
+    if (
+        prices["midpoint"] is None
+        or prices["spread"] is None
+        or prices["spread"] <= 0
+    ):
         return None
 
     total_depth = bid_depth + ask_depth

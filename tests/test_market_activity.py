@@ -22,6 +22,8 @@ def test_active_market_does_not_rotate():
         tracker.record_delta("ACTIVE", now=second + 0.1)
 
     assert tracker.get_rate("ACTIVE", now=300) >= 30
+    tracker.record_midpoint("ACTIVE", "0.50", now=100)
+    tracker.record_midpoint("ACTIVE", "0.51", now=200)
     assert tracker.review_market("ACTIVE", now=300) is False
 
 
@@ -37,7 +39,7 @@ def test_low_activity_with_price_changes_stays():
     assert tracker.review_market("MOVING", now=300) is False
 
 
-def test_high_deltas_without_price_changes_stays():
+def test_high_deltas_without_price_changes_rotates():
     tracker = MarketActivityTracker()
     tracker.register_market("BUSY", now=0)
 
@@ -48,4 +50,4 @@ def test_high_deltas_without_price_changes_stays():
         tracker.record_midpoint("BUSY", "0.50", now=second)
 
     assert tracker.get_midpoint_changes("BUSY", now=300) == 0
-    assert tracker.review_market("BUSY", now=300) is False
+    assert tracker.review_market("BUSY", now=300) is True

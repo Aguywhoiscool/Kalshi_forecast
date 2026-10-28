@@ -32,6 +32,30 @@ def get_live_market_status(ticker):
 
     response.raise_for_status()
     market = response.json()["market"]
+    def quote_cents(field, dollar_field):
+        value = market.get(dollar_field)
+
+        if value is not None:
+            return round(float(value) * 100, 4)
+
+        value = market.get(field)
+
+        if value is not None:
+            return float(value)
+
+        return None
+
+    yes_bid = quote_cents("yes_bid", "yes_bid_dollars")
+    yes_ask = quote_cents("yes_ask", "yes_ask_dollars")
+
+    spread_cents = None
+
+    if (
+        yes_bid is not None
+        and yes_ask is not None
+        and 0 <= yes_bid <= yes_ask <= 100
+    ):
+        spread_cents = round(yes_ask - yes_bid, 4)
 
     return {
         "ticker": ticker,
@@ -41,6 +65,9 @@ def get_live_market_status(ticker):
             market,
             min_minutes_to_close=10,
         ),
+        "yes_bid_cents": yes_bid,
+        "yes_ask_cents": yes_ask,
+        "spread_cents": spread_cents,
     }
 
 

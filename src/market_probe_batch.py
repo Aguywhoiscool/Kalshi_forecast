@@ -45,12 +45,14 @@ class MarketProbeBatch:
 
         temporary.replace(self.path)
 
+    
     def next_batch(
         self,
         candidates,
         cache,
         batch_size=20,
     ):
+        """Find uncached candidates without advancing the cursor."""
         if not candidates or batch_size <= 0:
             return []
 
@@ -78,17 +80,22 @@ class MarketProbeBatch:
             if len(selected) >= batch_size:
                 break
 
-        # Advance to the position following the last scan.
-        if selected:
-            last_ticker = selected[-1]["ticker"]
-
-            for offset in range(count):
-                index = (start + offset) % count
-
-                if candidates[index]["ticker"] == last_ticker:
-                    self.cursor = (index + 1) % count
-                    break
-
-            self.save()
-
         return selected
+
+    def commit_batch(self, candidates, batch):
+        """Advance the cursor after a successful observation."""
+        if not candidates or not batch:
+            return
+
+        last_ticker = batch[-1]["ticker"]
+
+        for index, market in enumerate(candidates):
+            if market["ticker"] == last_ticker:
+                self.cursor = (index + 1) % len(candidates)
+                self.save()
+                return
+
+        raise ValueError(
+            "Last observed market is no longer in candidate pool"
+        )
+
