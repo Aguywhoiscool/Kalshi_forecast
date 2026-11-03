@@ -96,20 +96,20 @@
       }
     },
     "KXDOTA2GAME-26NOV031400GLNAVI-GL": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXDOTA2GAME-26NOV031400GLNAVI-GL",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 10,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 2,
         "midpoint_changes": 0,
         "meaningful_changes": 0,
         "spread_cents": 7.0,
         "last_spread_cents": 7.0,
-        "spread_sample_count": 11,
+        "spread_sample_count": 3,
         "valid_book": true,
         "snapshot_received": true
       }
@@ -134,14 +134,14 @@
       }
     },
     "KXTRUMPACTD-26NOV03-YES": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXTRUMPACTD-26NOV03-YES",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
         "delta_count": 0,
         "midpoint_changes": 0,
         "meaningful_changes": 0,
@@ -210,39 +210,20 @@
       }
     },
     "KXITFMATCH-26NOV03LIMESC-LIM": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXITFMATCH-26NOV03LIMESC-LIM",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 5,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 1,
         "midpoint_changes": 0,
         "meaningful_changes": 0,
         "spread_cents": 4.0,
         "last_spread_cents": 4.0,
-        "spread_sample_count": 6,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXDIMAYORTOTAL-26NOV02BUCCAN-7": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXDIMAYORTOTAL-26NOV02BUCCAN-7",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 473,
-        "midpoint_changes": 46,
-        "meaningful_changes": 46,
-        "spread_cents": 1.0,
-        "last_spread_cents": 1.0,
-        "spread_sample_count": 474,
+        "spread_sample_count": 2,
         "valid_book": true,
         "snapshot_received": true
       }
@@ -419,153 +400,58 @@
       }
     },
     "KXBIGGESTQUAKE-03NOV26-5.8": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXBIGGESTQUAKE-03NOV26-5.8",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 5,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 0,
         "midpoint_changes": 0,
         "meaningful_changes": 0,
-        "spread_cents": 1.0,
-        "last_spread_cents": 1.0,
-        "spread_sample_count": 6,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNFLRECYDS-26NOV02CHISEA-CHIRJOHNSON23-5": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNFLRECYDS-26NOV02CHISEA-CHIRJOHNSON23-5",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 785,
-        "midpoint_changes": 78,
-        "meaningful_changes": 78,
-        "spread_cents": 3.0,
-        "last_spread_cents": 4.0,
-        "spread_sample_count": 786,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNFLRSHATT-26NOV02CHISEA-SEAZCHARBONNET26-11": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNFLRSHATT-26NOV02CHISEA-SEAZCHARBONNET26-11",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 423,
-        "midpoint_changes": 86,
-        "meaningful_changes": 86,
-        "spread_cents": 4.0,
-        "last_spread_cents": 6.0,
-        "spread_sample_count": 424,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNBAPTS-26NOV02TORLAC-LACBLOPEZ11-10": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNBAPTS-26NOV02TORLAC-LACBLOPEZ11-10",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 10,
-        "midpoint_changes": 1,
-        "meaningful_changes": 1,
         "spread_cents": 2.0,
-        "last_spread_cents": 1.0,
-        "spread_sample_count": 11,
+        "last_spread_cents": 2.0,
+        "spread_sample_count": 1,
         "valid_book": true,
         "snapshot_received": true
       }
     },
     "KXNBA3PT-26NOV02MIALAL-LALSMAMUKELASHVILI54-2": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXNBA3PT-26NOV02MIALAL-LALSMAMUKELASHVILI54-2",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 1,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 3,
         "midpoint_changes": 0,
         "meaningful_changes": 0,
         "spread_cents": 1.0,
         "last_spread_cents": 1.0,
-        "spread_sample_count": 2,
+        "spread_sample_count": 4,
         "valid_book": true,
         "snapshot_received": true
       }
     },
     "KXPGATOP20-WOWTC26-RHOJ": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXPGATOP20-WOWTC26-RHOJ",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 136,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 144,
         "midpoint_changes": 0,
         "meaningful_changes": 0,
         "spread_cents": 5.0,
         "last_spread_cents": 5.0,
-        "spread_sample_count": 137,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNHLSPREAD-26NOV02COLCHI-COL4": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNHLSPREAD-26NOV02COLCHI-COL4",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 369,
-        "midpoint_changes": 0,
-        "meaningful_changes": 0,
-        "spread_cents": 2.0,
-        "last_spread_cents": 2.0,
-        "spread_sample_count": 370,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNBA3D-26NOV02ATLIND-INDJWALKER5": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNBA3D-26NOV02ATLIND-INDJWALKER5",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 0,
-        "midpoint_changes": 0,
-        "meaningful_changes": 0,
-        "spread_cents": 7.0,
-        "last_spread_cents": 7.0,
-        "spread_sample_count": 1,
+        "spread_sample_count": 145,
         "valid_book": true,
         "snapshot_received": true
       }
@@ -703,154 +589,78 @@
         "snapshot_received": true
       }
     },
-    "KXNCAAMBSPREAD-26NOV02ELONCLMB-ELON28": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNCAAMBSPREAD-26NOV02ELONCLMB-ELON28",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 11,
-        "midpoint_changes": 0,
-        "meaningful_changes": 0,
-        "spread_cents": 6.0,
-        "last_spread_cents": 6.0,
-        "spread_sample_count": 1,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNBA2D-26NOV02ATLIND-INDJHUFF32": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNBA2D-26NOV02ATLIND-INDJHUFF32",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 9,
-        "midpoint_changes": 6,
-        "meaningful_changes": 6,
-        "spread_cents": 27.0,
-        "last_spread_cents": 27.0,
-        "spread_sample_count": 10,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
     "KXNFL1HSPREAD-26NOV02CHISEA-CHI14": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXNFL1HSPREAD-26NOV02CHISEA-CHI14",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 683,
-        "midpoint_changes": 47,
-        "meaningful_changes": 47,
-        "spread_cents": 3.0,
-        "last_spread_cents": 1.0,
-        "spread_sample_count": 684,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXTRUMPMENTIONB-26NOV02-ALAS": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXTRUMPMENTIONB-26NOV02-ALAS",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 25,
-        "midpoint_changes": 0,
-        "meaningful_changes": 0,
-        "spread_cents": 1.0,
-        "last_spread_cents": 1.0,
-        "spread_sample_count": 26,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 841,
+        "midpoint_changes": 95,
+        "meaningful_changes": 95,
+        "spread_cents": 4.0,
+        "last_spread_cents": 3.0,
+        "spread_sample_count": 842,
         "valid_book": true,
         "snapshot_received": true
       }
     },
     "KXNBAPTS-26NOV02OKCCLE-CLEMHEZONJA33-20": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXNBAPTS-26NOV02OKCCLE-CLEMHEZONJA33-20",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 73,
-        "midpoint_changes": 8,
-        "meaningful_changes": 8,
-        "spread_cents": 6.0,
-        "last_spread_cents": 6.0,
-        "spread_sample_count": 74,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 16,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 5.0,
+        "last_spread_cents": 5.0,
+        "spread_sample_count": 7,
         "valid_book": true,
         "snapshot_received": true
       }
     },
     "KXWTACHALLENGERMATCH-26NOV03SUVKUB-SUV": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
       "observation": {
         "ticker": "KXWTACHALLENGERMATCH-26NOV03SUVKUB-SUV",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
         "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 28,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 29,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNBAAST-26NOV02ATLIND-INDJWALKER5-8": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXNBAAST-26NOV02ATLIND-INDJWALKER5-8",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
         "delta_count": 0,
         "midpoint_changes": 0,
         "meaningful_changes": 0,
         "spread_cents": 1.0,
         "last_spread_cents": 1.0,
         "spread_sample_count": 1,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNBAAST-26NOV02ATLIND-INDJWALKER5-8": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNBAAST-26NOV02ATLIND-INDJWALKER5-8",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 2,
-        "midpoint_changes": 0,
-        "meaningful_changes": 0,
-        "spread_cents": 1.0,
-        "last_spread_cents": 1.0,
-        "spread_sample_count": 3,
-        "valid_book": true,
-        "snapshot_received": true
-      }
-    },
-    "KXNBATOTAL-26NOV02SACDAL-201": {
-      "observed_at": "2026-11-03T02:04:07.258778+00:00",
-      "observation": {
-        "ticker": "KXNBATOTAL-26NOV02SACDAL-201",
-        "valid_seconds": 119.828,
-        "total_seconds": 120.016,
-        "valid_coverage": 0.9984,
-        "first_valid_delay": 0.188,
-        "duration_seconds": 119.828,
-        "delta_count": 748,
-        "midpoint_changes": 52,
-        "meaningful_changes": 52,
-        "spread_cents": 2.0,
-        "last_spread_cents": 1.0,
-        "spread_sample_count": 749,
         "valid_book": true,
         "snapshot_received": true
       }
@@ -946,6 +756,196 @@
         "spread_cents": 1.0,
         "last_spread_cents": 1.0,
         "spread_sample_count": 5494,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXATPCHALLENGERMATCH-26NOV03GAGNIJ-GAG": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXATPCHALLENGERMATCH-26NOV03GAGNIJ-GAG",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 14,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 15,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXATPCHALLENGERMATCH-26NOV03TUNHOU-HOU": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXATPCHALLENGERMATCH-26NOV03TUNHOU-HOU",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNBAREB-26NOV02PHXGSW-GSWDMELTON8-4": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXNBAREB-26NOV02PHXGSW-GSWDMELTON8-4",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 12,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 3.0,
+        "last_spread_cents": 3.0,
+        "spread_sample_count": 13,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNBA3D-26NOV02ATLIND-INDQJACKSON29": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXNBA3D-26NOV02ATLIND-INDQJACKSON29",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 56,
+        "midpoint_changes": 4,
+        "meaningful_changes": 4,
+        "spread_cents": 7.0,
+        "last_spread_cents": 7.0,
+        "spread_sample_count": 57,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXITFMATCH-26NOV03DEAMAS-DEA": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXITFMATCH-26NOV03DEAMAS-DEA",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 7,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 4.0,
+        "last_spread_cents": 4.0,
+        "spread_sample_count": 8,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNHL3PTOTAL-26NOV02DETFLA-4": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXNHL3PTOTAL-26NOV02DETFLA-4",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 488,
+        "midpoint_changes": 4,
+        "meaningful_changes": 4,
+        "spread_cents": 7.0,
+        "last_spread_cents": 7.0,
+        "spread_sample_count": 489,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNCAAMBSPREAD-26NOV03WOFTENN-TENN25": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXNCAAMBSPREAD-26NOV03WOFTENN-TENN25",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 0,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 9.0,
+        "last_spread_cents": 9.0,
+        "spread_sample_count": 1,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNFLRSHYDS-26NOV02CHISEA-SEAJPRICE8-20": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXNFLRSHYDS-26NOV02CHISEA-SEAJPRICE8-20",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 588,
+        "midpoint_changes": 82,
+        "meaningful_changes": 82,
+        "spread_cents": 5.0,
+        "last_spread_cents": 5.0,
+        "spread_sample_count": 589,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXTRUMPMENTIONB-26NOV02-CRYP": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXTRUMPMENTIONB-26NOV02-CRYP",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 76,
+        "midpoint_changes": 0,
+        "meaningful_changes": 0,
+        "spread_cents": 1.0,
+        "last_spread_cents": 1.0,
+        "spread_sample_count": 77,
+        "valid_book": true,
+        "snapshot_received": true
+      }
+    },
+    "KXNFLRSHATT-26NOV02CHISEA-SEAJPRICE8-7": {
+      "observed_at": "2026-11-03T02:11:03.119732+00:00",
+      "observation": {
+        "ticker": "KXNFLRSHATT-26NOV02CHISEA-SEAJPRICE8-7",
+        "valid_seconds": 119.844,
+        "total_seconds": 120.031,
+        "valid_coverage": 0.9984,
+        "first_valid_delay": 0.187,
+        "duration_seconds": 119.844,
+        "delta_count": 1355,
+        "midpoint_changes": 230,
+        "meaningful_changes": 230,
+        "spread_cents": 7.0,
+        "last_spread_cents": 6.0,
+        "spread_sample_count": 1356,
         "valid_book": true,
         "snapshot_received": true
       }
