@@ -37,6 +37,9 @@ data/.stfolder
 models/*
 !models/.gitkeep
 
+# Frozen local research snapshots, model benchmarks and generated reports
+artifacts/
+
 # --------------------------------
 # Jupyter notebooks
 # --------------------------------

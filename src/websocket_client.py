@@ -31,6 +31,7 @@ from src.orderbook import OrderBookManager
 from src.feature_sampler import FeatureSampler
 from src.market_activity import MarketActivityTracker
 from src.live_market_status import get_live_market_status
+from src.background_status_review import BackgroundStatusReview
 from src.market_rotation import apply_rotation_fallback
 from src.observation_coordinator import ObservationCoordinator
 from src.activity_candidate_pool import (
@@ -117,8 +118,6 @@ async def stream_markets(tickers):
     connected_since = time.monotonic()
     last_report = connected_since
     last_market_review = connected_since
-    last_status_check = connected_since
-    STATUS_CHECK_SECONDS = 60
     # Authentication must be regenerated for each connection.
     auth = get_auth_headers("GET", "/trade-api/ws/v2")
 
@@ -131,7 +130,7 @@ async def stream_markets(tickers):
         ping_timeout=20,
         max_size=8 * 1024 * 1024,
         open_timeout=15,
-    ) as ws:
+    ) as ws, BackgroundStatusReview(tickers, get_live_market_status) as status_review:
 
         await ws.send(json.dumps({
             "id": 1,
@@ -320,24 +319,9 @@ async def stream_markets(tickers):
             
             # Independently check whether monitored markets
             # are still open and sufficiently far from closing.
-            if now - last_status_check >= STATUS_CHECK_SECONDS:
-                print("\n=== LIVE MARKET STATUS REVIEW ===")
-
-                
+            status_results = status_review.poll(now)
+            if status_results is not None:
                 closed_markets = set()
-
-                # Run REST requests concurrently rather than
-                # waiting for each market sequentially.
-                status_results = await asyncio.gather(
-                    *[
-                        asyncio.to_thread(
-                            get_live_market_status,
-                            ticker,
-                        )
-                        for ticker in tickers
-                    ],
-                    return_exceptions=True,
-                )
 
                 for ticker, status in zip(tickers, status_results):
 
@@ -356,8 +340,6 @@ async def stream_markets(tickers):
                             f"close={status['close_time']}"
                         )
 
-
-                last_status_check = time.monotonic()
 
                 if closed_markets:
                     print(
