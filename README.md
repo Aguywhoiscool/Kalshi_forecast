@@ -83,6 +83,58 @@ The report is standalone and requires no web server, account, or external assets
   Fees, slippage, latency, fill capacity and impact are excluded. Positive gross
   results would not establish a profitable executable strategy.
 
+## Large-swing entry/exit experiment
+
+This separate experiment retains valid wide spreads and predicts at least five
+cents of quoted gross return on YES or NO over 30/60 seconds, with no-trade as an
+option. It uses a one-observation entry delay, one-contract depth checks, and a
+predeclared four-cent additional round-trip cost scenario. Other cost/delay and
+first-crossing bracket exits are sensitivity checks, not parameters selected on
+validation results. Historical market-specific fees are not available in the
+feature recordings, so cost buffers must not be presented as actual fee-adjusted
+profits. Missing future quotes remain censored; low exit depth is unresolved and
+conservatively marked to zero contract value, not treated as a confirmed fill.
+
+```powershell
+python -u -m src.analyze_swing_opportunities --output artifacts/swing_opportunities_NEW
+python -u -m src.swing_strategy_experiment --diagnostics artifacts/swing_opportunities_NEW --output artifacts/swing_strategy_NEW
+```
+
+The first script diagnoses opportunities using explicitly labeled hindsight
+upper bounds. The second trains new models, chooses thresholds from a purged
+chronological calibration subset of original training, simulates entry/exit
+rules, and independently audits the saved results. It never uses peak exits or
+future directions to select trades. Neither script evaluates the reserved v2/v3
+holdouts or submits orders.
+
+The initial local run is `artifacts/swing_strategy_20261104/index.html`.
+It did not establish a robust profitable strategy. Sparse positive results and
+SGD iteration-limit warnings require care; see its report and `audit.json`.
+
+## Past-only swing return experiment
+
+The corrected experiment selects entries from the preceding 60 observations,
+without requiring future quote coverage. Missing entry or exit observations stay
+in the evaluation with explicit payoff bounds. Models predict conservative net
+returns for YES and NO; a fixed expected-return margin controls entry, rather
+than a probability of a large win. The primary cost scenario is an assumed
+four-cent round-trip buffer, not measured historical fees.
+
+```powershell
+python -u -m src.swing_return_experiment --output artifacts/swing_returns_NEW
+```
+
+This compares mean, ridge, SGD, decision tree, random forest, gradient boosting,
+GRU and Monte Carlo forecasts against no trade at 30/60 seconds. Source arrays
+are reconstructed from frozen CSVs before training and during the final audit.
+Reports include missing outcomes and block subsequent entries when a position's
+outcome is uncertain. Reserved v2/v3 outcomes remain excluded. Outputs are local
+under the new artifact directory, with progress in `status.json`.
+
+The earlier classifier experiment above is retained for comparison; its cohort
+conditions on future quote availability and its win probabilities do not measure
+expected net returns. Its results should be interpreted with those limitations.
+
 ## Tests and collection
 
 ```powershell
