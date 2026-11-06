@@ -20,11 +20,18 @@ from src.v3_research import FEATURES, overlaps
 
 
 class KalshiFeed:
-    def __init__(self, tickers=None):
+    def __init__(self, tickers=None, rescan_seconds=600, min_close_minutes=10):
+        if rescan_seconds < 1 or min_close_minutes < 3:
+            raise ValueError("Positive rescan interval and at least three minutes until close required")
         self.requested = tickers
+        self.rescan_seconds = rescan_seconds
+        self.min_close_minutes = min_close_minutes
+        self.close_times = {}
         self.lock = threading.Lock()
         self.state = {"status": "connecting", "snapshots": 0, "messages": 0,
-                      "warmup_samples": 0, "reconnects": 0, "error": None}
+                      "warmup_samples": 0, "reconnects": 0, "error": None,
+                      "rescan_seconds": rescan_seconds, "min_close_minutes": min_close_minutes,
+                      "stop_before_close_seconds": 90}
         self.reset()
 
     def reset(self):
@@ -55,7 +62,8 @@ class KalshiFeed:
         stamp = time.time_ns() if stamp is None else stamp
         with self.lock:
             for ticker in tickers:
-                features = extract_features(self.manager.get_prices(ticker))
+                too_close = stamp/1e9 >= self.close_times.get(ticker, float("inf"))-90
+                features = None if too_close else extract_features(self.manager.get_prices(ticker))
                 rows = self.histories.setdefault(ticker, deque(maxlen=60))
                 if features is None:
                     rows.clear()
@@ -71,6 +79,8 @@ class KalshiFeed:
             health = dict(self.state)
             if self.state["status"] == "connected":
                 for ticker, rows in self.histories.items():
+                    if time.time() >= self.close_times.get(ticker, float("inf"))-90:
+                        continue
                     if len(rows) != 60 or self.session in protected["sessions"]:
                         continue
                     clocks = np.array([row[0] for row in rows], dtype=np.int64)
@@ -93,8 +103,11 @@ class KalshiFeed:
                     tickers = self.requested[:8]
                 else:
                     from src.market_ranker import rank_active_markets
-                    markets = await asyncio.to_thread(rank_active_markets, max_markets=8, max_pages=10)
+                    markets = await asyncio.to_thread(rank_active_markets, max_markets=8, max_pages=10,
+                        min_minutes_to_close=self.min_close_minutes)
                     tickers = [m["ticker"] for m in markets]
+                    self.close_times = {m["ticker"]: datetime.fromisoformat(
+                        m["close_time"].replace("Z", "+00:00")).timestamp() for m in markets}
                 if not tickers:
                     raise ValueError("No eligible open markets found")
                 auth = await asyncio.to_thread(get_auth_headers, "GET", "/trade-api/ws/v2")
@@ -103,13 +116,14 @@ class KalshiFeed:
                         ping_timeout=10, open_timeout=15, max_size=8*1024*1024) as ws:
                     self.reset()
                     with self.lock:
-                        self.state.update(status="connected", tickers=tickers, error=None)
+                        self.state.update(status="connected", tickers=tickers, error=None,
+                                          next_rescan_at=int((time.time()+self.rescan_seconds)*1000))
                     await ws.send(json.dumps({"id": 1, "cmd": "subscribe", "params": {
                         "channels": ["orderbook_delta"], "market_tickers": tickers}}))
                     started = time.monotonic()
                     next_sample, next_ping = started+1, started+15
                     delay = 2
-                    while time.monotonic()-started < 1800:
+                    while time.monotonic()-started < self.rescan_seconds:
                         try:
                             raw = await asyncio.wait_for(ws.recv(), timeout=max(.001, next_sample-time.monotonic()))
                         except asyncio.TimeoutError:

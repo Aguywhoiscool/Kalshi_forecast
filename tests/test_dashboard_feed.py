@@ -47,6 +47,29 @@ def test_gap_forces_resync_and_sampling_pause_cannot_stitch():
     assert len(feed.histories["T"]) == 1
 
 
+def test_near_close_book_stops_sampling_before_forecast_horizon():
+    feed = ready()
+    feed.close_times["T"] = 200
+    feed.sample(["T"], 109*10**9)
+    assert len(feed.histories["T"]) == 1
+    feed.sample(["T"], 110*10**9)
+    assert not feed.histories["T"]
+
+
+def test_dashboard_discovery_allows_half_hour_market_without_changing_collector(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    from src import market_ranker
+    market = {"ticker": "T", "event_ticker": "E", "status": "active",
+              "close_time": (datetime.now(timezone.utc)+timedelta(minutes=30)).isoformat(),
+              "yes_bid_dollars": ".4", "yes_ask_dollars": ".42", "volume_24h_fp": "100000",
+              "yes_bid_size_fp": "1000", "yes_ask_size_fp": "1000"}
+    monkeypatch.setattr(market_ranker, "fetch_candidates", lambda *args: [market])
+    assert market_ranker.rank_active_markets(min_minutes_to_close=10) == [market]
+    assert market_ranker.rank_active_markets() == []
+    feed = KalshiFeed()
+    assert feed.rescan_seconds == 600 and feed.min_close_minutes == 10
+
+
 def test_only_market_data_subscription_is_sent_and_cleanup_resets(monkeypatch):
     sent = []
     class Socket:

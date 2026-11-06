@@ -184,13 +184,14 @@ class Dashboard:
             return copy.deepcopy(self.state)
 
 
-def create_app(run=None, directory=None, dashboard=None, mode="kalshi", tickers=None):
+def create_app(run=None, directory=None, dashboard=None, mode="kalshi", tickers=None,
+               rescan_seconds=600, min_close_minutes=10):
     if run is None:
         run = Path(json.loads((ROOT / "artifacts/swing_return_latest.json").read_text())["run"])
     feed = None
     if mode == "kalshi" and dashboard is None:
         from src.dashboard_feed import KalshiFeed
-        feed = KalshiFeed(tickers)
+        feed = KalshiFeed(tickers, rescan_seconds, min_close_minutes)
     engine = dashboard or Dashboard(Path(run), Path(directory or ROOT / "data/processed"), feed=feed)
 
     @asynccontextmanager
@@ -228,6 +229,9 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--feed", choices=("kalshi", "files"), default="kalshi")
     parser.add_argument("--tickers", nargs="+", help="Optional market tickers; otherwise discover eight open markets")
+    parser.add_argument("--rescan-seconds", type=int, default=600)
+    parser.add_argument("--min-close-minutes", type=float, default=10)
     args = parser.parse_args()
     import uvicorn
-    uvicorn.run(create_app(args.run, args.data_dir, mode=args.feed, tickers=args.tickers), host="127.0.0.1", port=args.port)
+    uvicorn.run(create_app(args.run, args.data_dir, mode=args.feed, tickers=args.tickers,
+        rescan_seconds=args.rescan_seconds, min_close_minutes=args.min_close_minutes), host="127.0.0.1", port=args.port)

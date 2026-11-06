@@ -80,7 +80,11 @@ def fetch_candidates(session, max_pages=MAX_PAGES):
 def rank_active_markets(
     max_markets=MAX_MARKETS,
     max_pages=MAX_PAGES,
-    excluded_tickers=None ):
+    excluded_tickers=None,
+    min_minutes_to_close=None):
+    minimum_minutes = max(60., MIN_HOURS * 60) if min_minutes_to_close is None else float(min_minutes_to_close)
+    if not math.isfinite(minimum_minutes) or minimum_minutes < 0:
+        raise ValueError("Invalid minimum minutes until close")
     with requests.Session() as session:
         markets = fetch_candidates(session, max_pages)
     excluded_tickers = set(excluded_tickers or [])
@@ -90,12 +94,10 @@ def rank_active_markets(
             continue
         if not market_is_tradable(
             m,
-            min_minutes_to_close=60
+            min_minutes_to_close=minimum_minutes
         ):
             continue
 
-        if hours_until_close(m) < MIN_HOURS:
-            continue
         bid = number(m.get('yes_bid_dollars'))
         ask = number(m.get('yes_ask_dollars'))
         spread = ask - bid

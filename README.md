@@ -173,7 +173,13 @@ authentication. No account, balance, fill or order channel is subscribed.
 Reconnections and subscription confirmations reset books and history; sequence
 gaps force a fresh connection. Forecasting needs about one minute of continuous
 history after connecting. Unchanged books remain valid between deltas while the
-connection is healthy. Market selection refreshes every 30 minutes.
+connection is healthy. Market selection refreshes every 10 minutes. Dashboard
+discovery accepts markets with at least 10 minutes until close; use
+`--min-close-minutes` to change this (minimum three). Known scheduled closes
+pause forecasts 90 seconds before closing. The collector's one-hour discovery
+default is unchanged. Each rescan reconnects and needs a fresh minute of history.
+Use `--rescan-seconds` to change the rescan interval. These policies do not make
+the models validated on near-close markets; evaluate that regime separately.
 
 For the previous Syncthing mode, use `--feed files`. This monitors up to eight
 markets from the six newest CSVs, reads bounded tails and ignores partial rows.
