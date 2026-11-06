@@ -156,8 +156,8 @@ assumed from local file stability.
 .\.venv\Scripts\python.exe -m src.live_dashboard
 ```
 
-Open `http://127.0.0.1:8765`. The local dashboard follows the latest synced feature
-CSVs and displays all eight model forecasts at 30/60 seconds, midpoint and spread
+Open `http://127.0.0.1:8765`. The local dashboard connects directly to Kalshi's
+authenticated order-book WebSocket and displays all eight model forecasts at 30/60 seconds, midpoint and spread
 history, YES/NO net-return comparisons, and a rolling prediction log. It defaults
 to the audited run in `artifacts/swing_return_latest.json`. To choose another run:
 
@@ -165,15 +165,25 @@ to the audited run in `artifacts/swing_return_latest.json`. To choose another ru
 python -m src.live_dashboard --run artifacts/swing_returns_all_20261106 --port 8765
 ```
 
-The backend polls every five seconds and loads saved model weights, scalers and
-calibration corrections without retraining. It monitors up to eight markets from
-the six newest files, reads bounded CSV tails, ignores partial final rows, and
-requires a valid continuous 60-row history inside one session. Reserved research
-periods and sessions are excluded. Data older than 30 seconds pauses new forecasts;
-the UI marks cached results stale. A synced file feed is not a direct exchange
-connection, and delays depend on the collector and Syncthing.
+The backend samples reconstructed books once per second and updates inference
+every five seconds using saved weights, scalers and calibration corrections.
+It discovers up to eight open markets, or accepts `--tickers TICKER1 TICKER2`.
+The `.env` credentials stay on the server and are used only for market-data
+authentication. No account, balance, fill or order channel is subscribed.
+Reconnections and subscription confirmations reset books and history; sequence
+gaps force a fresh connection. Forecasting needs about one minute of continuous
+history after connecting. Unchanged books remain valid between deltas while the
+connection is healthy. Market selection refreshes every 30 minutes.
 
-The service binds only to localhost and imports no authenticated market client.
+For the previous Syncthing mode, use `--feed files`. This monitors up to eight
+markets from the six newest CSVs, reads bounded tails and ignores partial rows.
+Both modes require a valid continuous 60-row history inside one session and
+exclude reserved research periods. Observations older than 30 seconds pause
+new forecasts; cached results are marked stale. The direct WebSocket mode keeps
+observations in memory and never writes to the shared data folder or changes
+the collector on the other computer.
+
+The service binds only to localhost and uses the existing signing helper.
 There are no order routes or trading controls. Forecasts are conservative return
 estimates in cents, not win probabilities. The primary 4-cent cost assumption is
 not measured fees, and these models have not demonstrated a profitable strategy.

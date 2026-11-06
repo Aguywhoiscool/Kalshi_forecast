@@ -1,4 +1,4 @@
-"""Local, read-only inference over Syncthing feature files. No account client."""
+"""Local read-only inference over Kalshi WebSocket or synced feature files."""
 
 import argparse
 import asyncio
@@ -130,13 +130,14 @@ class Predictor:
 
 
 class Dashboard:
-    def __init__(self, run, directory, predictor_factory=Predictor):
+    def __init__(self, run, directory, predictor_factory=Predictor, feed=None):
         self.run, self.directory, self.factory = run, directory, predictor_factory
+        self.feed = feed
         protocol = json.loads((run / "protocol.json").read_text())
         self.protected = json.loads((Path(protocol["source"]) / "protected_v2_period.json").read_text())
         self.lock, self.cache, self.timeline = threading.Lock(), {}, deque(maxlen=240)
         self.state = {"status": "loading_models", "markets": [], "timeline": [], "errors": [],
-            "model_run": run.name, "source": "Syncthing feature files", "poll_seconds": 5,
+            "model_run": run.name, "source": "Kalshi direct WebSocket" if feed else "Syncthing feature files", "poll_seconds": 5,
             "stale_after_seconds": 30, "cost_buffer_cents": 4, "entry_margin_cents": 1,
             "disclaimer": "Research forecasts, not executable orders. Conservative return targets; no demonstrated trading edge."}
         self.predictor = None
@@ -144,7 +145,11 @@ class Dashboard:
     def update(self):
         if self.predictor is None:
             self.predictor = self.factory(self.run)
-        items, errors = latest_histories(self.directory, self.protected)
+        if self.feed:
+            items, errors, health = self.feed.latest(self.protected)
+        else:
+            items, errors = latest_histories(self.directory, self.protected)
+            health = None
         markets = []
         now = time.time()
         keep = set()
@@ -171,17 +176,22 @@ class Dashboard:
         self.cache = {key: value for key, value in self.cache.items() if key in keep}
         with self.lock:
             self.state.update(status="live" if any(m["fresh"] for m in markets) else "stale" if markets else "waiting_for_history",
-                              updated_at=int(time.time()*1000), markets=markets, errors=errors, timeline=list(self.timeline))
+                              updated_at=int(time.time()*1000), markets=markets, errors=errors,
+                              timeline=list(self.timeline), feed=health)
 
     def snapshot(self):
         with self.lock:
             return copy.deepcopy(self.state)
 
 
-def create_app(run=None, directory=None, dashboard=None):
+def create_app(run=None, directory=None, dashboard=None, mode="kalshi", tickers=None):
     if run is None:
         run = Path(json.loads((ROOT / "artifacts/swing_return_latest.json").read_text())["run"])
-    engine = dashboard or Dashboard(Path(run), Path(directory or ROOT / "data/processed"))
+    feed = None
+    if mode == "kalshi" and dashboard is None:
+        from src.dashboard_feed import KalshiFeed
+        feed = KalshiFeed(tickers)
+    engine = dashboard or Dashboard(Path(run), Path(directory or ROOT / "data/processed"), feed=feed)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -193,13 +203,13 @@ def create_app(run=None, directory=None, dashboard=None):
                     with engine.lock:
                         engine.state.update(status="error", errors=[{"message": str(error)[:250]}])
                 await asyncio.sleep(5)
-        task = asyncio.create_task(refresh())
+        tasks = [asyncio.create_task(refresh())]
+        if feed:
+            tasks.append(asyncio.create_task(feed.run()))
         yield
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     app = FastAPI(title="Kalshi Model Lab", lifespan=lifespan)
 
@@ -216,6 +226,8 @@ if __name__ == "__main__":
     parser.add_argument("--run", type=Path)
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--feed", choices=("kalshi", "files"), default="kalshi")
+    parser.add_argument("--tickers", nargs="+", help="Optional market tickers; otherwise discover eight open markets")
     args = parser.parse_args()
     import uvicorn
-    uvicorn.run(create_app(args.run, args.data_dir), host="127.0.0.1", port=args.port)
+    uvicorn.run(create_app(args.run, args.data_dir, mode=args.feed, tickers=args.tickers), host="127.0.0.1", port=args.port)
