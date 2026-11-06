@@ -21,6 +21,9 @@ FIELDNAMES = [
     "bid_depth",
     "ask_depth",
     "imbalance",
+    "scheduled_close_time",
+    "close_time_observed_at",
+    "seconds_to_scheduled_close",
 ]
 
 
@@ -49,8 +52,23 @@ class FeatureSampler:
             writer.writeheader()
 
         self.samples_written = 0
+        self.market_metadata = {}
 
         print(f"Feature recording: {self.filepath}")
+
+    def update_market_metadata(self, ticker, status):
+        """Save only schedules observed now, never retrospectively revise rows."""
+        close = status.get("close_time")
+        if not close:
+            return
+        try:
+            parsed = datetime.fromisoformat(close.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                return
+        except (ValueError, AttributeError):
+            return
+        self.market_metadata[ticker] = {
+            "close": parsed, "observed": datetime.now(timezone.utc)}
 
     def record(self, manager, tickers):
         """Sample every valid two-sided market book."""
@@ -77,6 +95,12 @@ class FeatureSampler:
                 "session_id": self.session_id,
                 **features,
             }
+            metadata = self.market_metadata.get(ticker)
+            observed = datetime.fromisoformat(timestamp)
+            if metadata and metadata["observed"] <= observed:
+                row.update(scheduled_close_time=metadata["close"].isoformat(),
+                    close_time_observed_at=metadata["observed"].isoformat(),
+                    seconds_to_scheduled_close=(metadata["close"]-observed).total_seconds())
 
             rows.append(row)
 

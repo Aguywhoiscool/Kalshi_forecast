@@ -57,6 +57,9 @@ RECONNECT_MAX_SECONDS = 30
 TEST_RECONNECT_AFTER_SECONDS = 0
 
 TARGET_MARKETS = 10
+COLLECTOR_MIN_CLOSE_MINUTES = float(os.getenv("COLLECTOR_MIN_CLOSE_MINUTES", "60"))
+if not 10 <= COLLECTOR_MIN_CLOSE_MINUTES <= 1440:
+    raise ValueError("COLLECTOR_MIN_CLOSE_MINUTES must be between 10 and 1440")
 MARKET_COOLDOWN_SECONDS = 1800  # 30 minutes
 REPLACEMENT_CANDIDATES = 50
 
@@ -340,6 +343,8 @@ async def stream_markets(tickers):
                             f"close={status['close_time']}"
                         )
 
+                    feature_sampler.update_market_metadata(ticker, status)
+
 
                 if closed_markets:
                     print(
@@ -523,6 +528,7 @@ async def connect_to_kalshi():
     selected = await asyncio.to_thread(
         rank_active_markets,
         max_markets=TARGET_MARKETS,
+        min_minutes_to_close=COLLECTOR_MIN_CLOSE_MINUTES,
     )
 
     if not selected:
@@ -693,6 +699,7 @@ async def connect_to_kalshi():
                         rank_active_markets,
                         max_markets=REPLACEMENT_CANDIDATES,
                         excluded_tickers=blocked,
+                        min_minutes_to_close=COLLECTOR_MIN_CLOSE_MINUTES,
                     )
 
                 except Exception as discovery_error:
@@ -857,6 +864,7 @@ async def connect_to_kalshi():
                 selected = await asyncio.to_thread(
                     rank_active_markets,
                     max_markets=TARGET_MARKETS,
+                    min_minutes_to_close=COLLECTOR_MIN_CLOSE_MINUTES,
                 )
             # Return to a fresh WebSocket session.
             reconnect_delay = RECONNECT_INITIAL_SECONDS

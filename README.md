@@ -195,6 +195,29 @@ estimates in cents, not win probabilities. The primary 4-cent cost assumption is
 not measured fees, and these models have not demonstrated a profitable strategy.
 Prediction history is bounded and kept in memory; it resets when the server exits.
 
+## Close-time metadata and existing recordings
+
+New collector session CSVs include `scheduled_close_time`,
+`close_time_observed_at`, and `seconds_to_scheduled_close`, populated from the
+existing background status reviews. Earlier rows remain blank until metadata is
+observed; no historical rows are rewritten and no additional per-tick requests
+are made. Existing seven-input models ignore the added columns. To admit markets
+with ten minutes until close, set `COLLECTOR_MIN_CLOSE_MINUTES=10` for a deliberate
+collector restart; the default is still 60. See
+`reports/near_close_collection_handoff.md` before changing the other computer.
+
+Existing features can be joined to public live/historical market schedules for
+a descriptive coverage audit:
+
+```powershell
+python -u -m src.backfill_close_metadata --output artifacts/near_close_backfill_NEW --max-markets 40
+```
+
+This queries development-market metadata only and discards settlement/results
+and price fields. Retrospective schedules are explicitly unverified as-of the
+original observations; this audit does not authorize them as causal model inputs.
+Missing second-level book observations cannot be reconstructed from close times.
+
 ## Tests and collection
 
 ```powershell

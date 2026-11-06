@@ -130,7 +130,8 @@ async def test_stream_samples_during_review_and_handles_closed_market(monkeypatc
     monkeypatch.setattr(client.websockets, "connect", lambda *args, **kw: FakeSocket())
     monkeypatch.setattr(client, "save_raw_message", lambda *args, **kw: None)
     monkeypatch.setattr(client, "FeatureSampler", lambda: SimpleNamespace(
-        record=lambda *args: samples.append(clock[0])))
+        record=lambda *args: samples.append(clock[0]),
+        update_market_metadata=lambda *args: None))
     try:
         expected = EndStream if slow else client.MarketRotationRequired
         with pytest.raises(expected) as caught:
