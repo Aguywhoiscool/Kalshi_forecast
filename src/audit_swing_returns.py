@@ -38,6 +38,14 @@ def independent_bounds(quotes, known, horizon, cost=4.):
             np.array([r[2] for r in result]).T)
 
 
+def verify_trade_keys(actual, expected):
+    """Compare identities with explicit types, including empty Parquet tables."""
+    types = {"session_id": "string", "ticker": "string", "input_end": "int64"}
+    pd.testing.assert_frame_equal(
+        actual[list(types)].astype(types).reset_index(drop=True),
+        expected[list(types)].astype(types).reset_index(drop=True))
+
+
 def audit(run):
     source_checks = verify_derived_inputs(run)
     protocol = json.loads((run / "protocol.json").read_text())
@@ -117,7 +125,7 @@ def audit(run):
             positions_chosen = np.flatnonzero(chosen)
             trades = pd.read_parquet(run / "trades" / f"{model}_{horizon}_margin1.parquet")
             expected_keys = meta.iloc[val[positions_chosen]][["session_id", "ticker", "input_end"]].reset_index(drop=True)
-            pd.testing.assert_frame_equal(trades[["session_id", "ticker", "input_end"]].reset_index(drop=True), expected_keys)
+            verify_trade_keys(trades, expected_keys)
             blocked, busy = set(), {}
             for local, trade in zip(positions_chosen, trades.itertuples()):
                 index, side = val[local], int(sides[local])

@@ -229,11 +229,12 @@ def report(output, rows, metrics):
     (output / "REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def run(output, epochs):
+def run(output, epochs, source=None):
     root, output = Path.cwd().resolve(), output.resolve()
     if root not in output.parents or root / "data" in output.parents or output.exists():
         raise ValueError("Use a new artifact directory outside data/")
-    source = Path(json.loads((root / "artifacts/model_lab_latest.json").read_text())["run_dir"]).resolve()
+    source = (Path(source) if source is not None else Path(json.loads(
+        (root / "artifacts/model_lab_latest.json").read_text())["run_dir"])).resolve()
     output.mkdir(parents=True)
     (output / "models").mkdir()
     (output / "trades").mkdir()
@@ -331,7 +332,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("artifacts/swing_returns_20261106"))
     parser.add_argument("--epochs", type=int, default=8)
+    parser.add_argument("--source", type=Path, help="Explicit immutable development source")
     args = parser.parse_args()
     if args.epochs < 1:
         parser.error("epochs must be positive")
-    run(args.output, args.epochs)
+    run(args.output, args.epochs, args.source)

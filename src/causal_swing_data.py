@@ -54,7 +54,10 @@ def source_groups(source):
     """Yield frozen development groups only, without testing future coverage."""
     original = pd.read_parquet(source / "windows.parquet")
     protected = json.loads((source / "protected_v2_period.json").read_text())
-    validate_splits(original, protected)
+    if (source / "development_source.json").exists():
+        validate_development_splits(original, protected)
+    else:
+        validate_splits(original, protected)
     assignment = original.groupby("session_id").split.first().to_dict()
     bounds = {name: (int(group.input_start.min()), int(group.target_end.max()))
               for name, group in original.groupby("split") if name in ("train", "val")}
@@ -66,6 +69,8 @@ def source_groups(source):
             continue
         split = assignment.get(session)
         if split is None:
+            if (source / "development_source.json").exists():
+                continue  # Explicitly purged sessions stay excluded.
             started = pd.to_datetime(session, format="%Y-%m-%d_%H-%M-%S_%f", utc=True).value
             if started <= bounds["train"][1]:
                 split = "train"
@@ -86,6 +91,19 @@ def source_groups(source):
                 raise ValueError("Source filename/session mismatch")
             group = group.sort_values("timestamp").reset_index(drop=True)
             yield item, split, ticker, group, bounds[split], protected
+
+
+def validate_development_splits(meta, protected):
+    if set(meta.split.unique()) != {"train", "val"}:
+        raise ValueError("Development source must contain train and val only")
+    if meta.groupby("session_id").split.nunique().max() > 1:
+        raise ValueError("Session crosses development split")
+    if meta.session_id.isin(protected["sessions"]).any() or overlaps(
+            meta.input_start.to_numpy(), meta.target_end.to_numpy(), protected).any():
+        raise ValueError("Reserved development source overlap")
+    if meta.loc[meta.split == "val", "input_start"].min() < (
+            meta.loc[meta.split == "train", "target_end"].max() + 70 * NS):
+        raise ValueError("Development embargo violated")
 
 
 def entry_metadata(session, ticker, split, times, validity, bounds, protected):

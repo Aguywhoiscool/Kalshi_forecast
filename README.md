@@ -135,6 +135,50 @@ The earlier classifier experiment above is retained for comparison; its cohort
 conditions on future quote availability and its win probabilities do not measure
 expected net returns. Its results should be interpreted with those limitations.
 
+To use newly collected feature files, freeze a separate development source first:
+
+```powershell
+python -u -m src.expanded_swing_source --output artifacts/swing_source_all_NEW
+python -u -m src.swing_return_experiment --source artifacts/swing_source_all_NEW --output artifacts/swing_returns_all_NEW
+```
+
+This considers every local feature CSV, excludes reserved v2/v3 sessions and time
+ranges, and skips recent, active, conflicting or changing files. The source has a
+chronological 80/20 session split with a 70-second embargo; calibration remains
+inside training. Its validation dates differ from the older experiment, so score
+differences alone cannot isolate the benefit of additional training data. Both
+sources and their reports remain separate. Remote Syncthing completion is not
+assumed from local file stability.
+
+## Live prediction dashboard
+
+```powershell
+.\.venv\Scripts\python.exe -m src.live_dashboard
+```
+
+Open `http://127.0.0.1:8765`. The local dashboard follows the latest synced feature
+CSVs and displays all eight model forecasts at 30/60 seconds, midpoint and spread
+history, YES/NO net-return comparisons, and a rolling prediction log. It defaults
+to the audited run in `artifacts/swing_return_latest.json`. To choose another run:
+
+```powershell
+python -m src.live_dashboard --run artifacts/swing_returns_all_20261106 --port 8765
+```
+
+The backend polls every five seconds and loads saved model weights, scalers and
+calibration corrections without retraining. It monitors up to eight markets from
+the six newest files, reads bounded CSV tails, ignores partial final rows, and
+requires a valid continuous 60-row history inside one session. Reserved research
+periods and sessions are excluded. Data older than 30 seconds pauses new forecasts;
+the UI marks cached results stale. A synced file feed is not a direct exchange
+connection, and delays depend on the collector and Syncthing.
+
+The service binds only to localhost and imports no authenticated market client.
+There are no order routes or trading controls. Forecasts are conservative return
+estimates in cents, not win probabilities. The primary 4-cent cost assumption is
+not measured fees, and these models have not demonstrated a profitable strategy.
+Prediction history is bounded and kept in memory; it resets when the server exits.
+
 ## Tests and collection
 
 ```powershell

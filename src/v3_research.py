@@ -61,7 +61,10 @@ def protected_period(root):
 
 
 def overlaps(starts, ends, protected):
-    return (starts <= protected["end"]) & (ends >= protected["start"])
+    result = (starts <= protected["end"]) & (ends >= protected["start"])
+    for period in protected.get("additional_periods", []):
+        result |= (starts <= period["end"]) & (ends >= period["start"])
+    return result
 
 
 def candidate_ends(times):
