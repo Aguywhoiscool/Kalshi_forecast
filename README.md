@@ -218,6 +218,22 @@ and price fields. Retrospective schedules are explicitly unverified as-of the
 original observations; this audit does not authorize them as causal model inputs.
 Missing second-level book observations cannot be reconstructed from close times.
 
+For a complete, resumable coverage audit of the frozen development snapshot:
+
+```powershell
+python -u -m src.audit_near_close_coverage --output artifacts/near_close_full_NEW
+```
+
+Rerun the same command to resume cached schedules. The audit reuses the initial
+40-market cache, limits public API traffic to six requests per second across at
+most four workers, validates source hashes, and excludes reserved sessions/time
+ranges. Outputs include `status.json`, `row_coverage.csv`, `window_coverage.csv`,
+retrospective window annotations, `summary.json`, and `REPORT.md`. Windows reuse
+the audited 120-second-spaced development cohort; spacing does not eliminate
+correlation between related markets. No model training or collector restart is
+performed. Give `reports/collection_computer_near_close_prompt.md` to Codex on
+the collection computer for the prepared rollout workflow.
+
 ## Tests and collection
 
 ```powershell
