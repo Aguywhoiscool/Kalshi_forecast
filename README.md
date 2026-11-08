@@ -234,6 +234,38 @@ correlation between related markets. No model training or collector restart is
 performed. Give `reports/collection_computer_near_close_prompt.md` to Codex on
 the collection computer for the prepared rollout workflow.
 
+## Hourly readiness audit
+
+Windows task `KalshiResearch-ReadinessHourly` runs the offline readiness audit
+hourly as the logged-in research user, using hidden project `pythonw.exe`.
+It remains independent of Codex and reads synced CSVs without network requests.
+The task does not wake the PC or run while the user is logged out; start-when-
+available allows a missed run to catch up. Power and Syncthing settings stay intact.
+
+Read `artifacts/readiness/LATEST.md`, `status.json`, and `last_run.json`. Reports
+are replaced atomically; the incremental cache avoids rereading unchanged files.
+The newest file and files modified within two minutes are skipped. Errors and
+stale data prevent a ready screen. No price-change targets or reserved outcomes
+are calculated. No collector processes, model files, or recordings are modified.
+
+```powershell
+# Manual run:
+.\.venv\Scripts\python.exe -m src.readiness_audit
+# Register/repair the reviewed hourly task and run it once:
+.\scripts\register_readiness_audit.ps1
+# Stop future automatic runs:
+Disable-ScheduledTask -TaskName 'KalshiResearch-ReadinessHourly'
+```
+
+The pilot screen asks for 1,000 valid near-close histories, 50 sessions, 20 event
+proxies and three UTC dates, with zero metadata violations/file errors and recent
+completed data. These are transparent heuristic review thresholds, not a power
+calculation or proof of model quality. All 60 observations must contain schedules
+known by their own timestamps. Signals are spaced by 120 seconds within each
+market/session. Event grouping is a ticker-prefix proxy. A ready screen triggers
+no training; chronological split design and related-market dependence still need
+review. A Windows file lock and task IgnoreNew policy prevent overlapping runs.
+
 ## Tests and collection
 
 ```powershell
