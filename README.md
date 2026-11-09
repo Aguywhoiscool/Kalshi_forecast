@@ -238,7 +238,13 @@ the collection computer for the prepared rollout workflow.
 
 Click a model row in the live dashboard for its frozen-observation explanation.
 The panel shows exact prediction calculations, saved training replay where
-available, and a separately labeled interactive gradient-descent teaching demo.
+available, and a model-specific "How this model works" visualization.
+Monte Carlo plays actual diverging simulation paths and random increments;
+trees branch through their visited decisions; forests combine tree outputs;
+boosting adds stage corrections; Ridge uses a signed contribution waterfall;
+SGD replays recorded updates; GRU shows a labeled recurrent architecture/input
+sequence schematic; the mean baseline shows aggregation into recorded means.
+Unrelated models no longer receive a generic gradient-descent animation.
 SGD shows actual recorded mini-batch updates; GRU shows actual Adam epoch/probe
 observations. A two-dimensional projection is not the full loss landscape.
 Linear contributions, tree decision paths, forest outputs and boosting stages
