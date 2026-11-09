@@ -32,7 +32,22 @@ function sectionlessProjection(steps){
   return svg;
 }
 function renderRandomDraws(d){const s=section('Inspect the actual random draws','Choose one of the plotted paths. Each integer selects an observed historical midpoint increment; the price is then bounded. All 2,048 paths are downloadable above.');const select=element('select'),holder=element('div');d.preview_indices.forEach((index,i)=>{const option=element('option',`Path ${index}`);option.value=i;select.append(option)});select.setAttribute('aria-label','Simulation path random values');function draw(){const i=Number(select.value)||0;holder.replaceChildren();tableInto(holder,['Step','Sampled increment index','Increment (¢)','Bounded midpoint (¢)'],d.preview_draw_indices[i].map((index,t)=>[t+1,index,number(d.historical_increments[index]*100),number(d.preview_paths[i][t+1]*100)]))}select.addEventListener('change',draw);s.append(select,holder);draw()}
-function renderExplanation(){clearInterval(replayTimer);replayTimer=null;ex('explanation-content').replaceChildren();if(!explanationData)return;if(explanationTab==='calculation'){formula(explanationData);renderModelMechanism(explanationData);if(explanationData.details.kind==='monte_carlo')renderRandomDraws(explanationData.details)}else if(explanationTab==='training')renderTraining(explanationData);else renderModelMechanism(explanationData)}
+function renderExplanation(){
+  clearInterval(replayTimer);replayTimer=null;
+  const content=ex('explanation-content');
+  if(!explanationData){if(!content.textContent.trim())content.append(element('p','No explanation loaded. Select a current forecast.','notice'));return}
+  content.replaceChildren();
+  try{
+    if(explanationTab==='calculation'){
+      if(explanationData.model==='monte_carlo'){renderModelMechanism(explanationData);formula(explanationData);renderRandomDraws(explanationData.details)}
+      else{formula(explanationData);renderModelMechanism(explanationData)}
+    }else if(explanationTab==='training')renderTraining(explanationData);else renderModelMechanism(explanationData);
+  }catch(error){
+    clearInterval(replayTimer);replayTimer=null;
+    const warning=element('div','Visualization could not be rendered. Refresh the page to load matching assets. '+error.message,'notice');
+    warning.setAttribute('role','alert');ex('explanation-content').append(warning);
+  }
+}
 async function loadExplanation(id,model,h,tree=0){const token=++explanationToken;explanationData=null;ex('explanation-provenance').textContent='';clearInterval(replayTimer);replayTimer=null;explanationRequest?.abort();explanationRequest=new AbortController();ex('explanation-title').textContent=MODEL_LABELS[model]||model;ex('explanation-content').replaceChildren(element('p','Computing the exact saved forecast explanation…','ex-muted'));if(!explanationDialog.open)explanationDialog.showModal();try{const response=await fetch(`/api/explanations/${encodeURIComponent(id)}/${encodeURIComponent(model)}?horizon=${h}&tree=${tree}`,{signal:explanationRequest.signal,cache:'no-store'});const d=await response.json();if(token!==explanationToken)return;if(!response.ok)throw Error(d.detail||'Explanation unavailable');explanationData=d;ex('explanation-provenance').textContent=`${d.ticker} · ${h}s · observed ${new Date(d.input_end/1e6).toLocaleString()} · run ${d.model_run} · forecast ${d.forecast_id}. This observation stays fixed while live data updates.`;renderExplanation()}catch(error){if(error.name==='AbortError'||token!==explanationToken)return;ex('explanation-content').replaceChildren(element('p',error.message,'notice'))}}
 const MODEL_LABELS={mean:'Mean baseline',ridge:'Ridge regression',sgd:'SGD regression',decision_tree:'Decision tree',random_forest:'Random forest',gradient_boosting:'Gradient boosting',gru:'GRU neural network',monte_carlo:'Monte Carlo'};
 function selectModel(event){const tr=event.target.closest('#predictions tr');if(!tr)return;const index=[...tr.parentNode.children].indexOf(tr),rows=(state?.markets.find(m=>m.ticker===selected)?.predictions||[]).filter(r=>r.horizon===horizon),row=rows[index];if(row?.forecast_id){explanationTab='calculation';document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('selected',b.dataset.tab===explanationTab));loadExplanation(row.forecast_id,row.model,horizon)}}

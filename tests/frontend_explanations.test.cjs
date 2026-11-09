@@ -23,13 +23,14 @@ function harness(fetch){
   }
   const body=new Element('body'),table=new Element('tbody');table.id='predictions';
   const document={body,createElement:t=>new Element(t),getElementById:id=>ids.get(id),querySelectorAll:()=>tabs};
-  const context={document,console,AbortController,setTimeout,clearTimeout,setInterval:()=>1,clearInterval(){},
+  const intervals=[];
+  const context={document,console,AbortController,setTimeout,clearTimeout,setInterval:fn=>{intervals.push(fn);return intervals.length},clearInterval:id=>{intervals[id-1]=null},
     MutationObserver:class{observe(){}},fetch,state:{markets:[]},selected:'',horizon:30,
     node:(tag,attrs={},text='')=>{const e=new Element(tag);e.textContent=text;Object.assign(e,attrs);return e}};
   vm.createContext(context);
   vm.runInContext(fs.readFileSync('frontend/explanations.js','utf8'),context);
   vm.runInContext(fs.readFileSync('frontend/model_mechanisms.js','utf8'),context);
-  return {context,ids};
+  return {context,ids,intervals};
 }
 
 function fixture(id='f'){
@@ -69,6 +70,7 @@ test('failed new request cannot reopen an old forecast through tabs',async()=>{
   vm.runInContext("explanationTab='calculation';renderExplanation()",context);
   assert.equal(ids.get('explanation-provenance').textContent,'');
   assert.doesNotMatch(ids.get('explanation-content').textContent,/training mean|exact return/);
+  assert.equal(ids.get('explanation-content').textContent,'Forecast expired');
 });
 
 function mechanismFixture(model){
@@ -125,4 +127,72 @@ test('SGD projection includes original weights on fixed axes across replay',()=>
   const initial=svg=>descendants(svg).find(e=>e['data-role']==='initial-weights');
   assert.equal(initial(one).cx,initial(two).cx);assert.equal(initial(one).cy,initial(two).cy);
   assert.match(two.textContent,/actual current update/);
+});
+
+test('full real live Monte Carlo payload renders both calculation and mechanism views',{
+  skip:!fs.existsSync('artifacts/mc_live_debug.json')&&'Live debug payload unavailable'
+},()=>{
+  const {context,ids}=harness(()=>{});
+  context.testFixture=JSON.parse(fs.readFileSync('artifacts/mc_live_debug.json','utf8'));
+  for(const tab of ['calculation','mechanism']){
+    vm.runInContext(`explanationData=testFixture;explanationTab='${tab}';renderExplanation()`,context);
+    const content=ids.get('explanation-content');
+    assert.match(content.textContent,/Monte Carlo: sample possible futures/);
+    const range=descendants(content).find(e=>e.type==='range');
+    assert.equal(Number(range.value),context.testFixture.horizon);
+    const fan=descendants(content).find(e=>e['data-mechanism']==='monte_carlo');
+    const paths=descendants(fan).filter(e=>e.tagName==='polyline');
+    assert.equal(paths.length,48);
+    assert.equal(paths[0].points.split(' ').length,context.testFixture.horizon+1);
+    range.value=String(context.testFixture.horizon);range.listeners.input();
+    assert.match(content.textContent,/bounded midpoint/);
+    assert.ok(descendants(content).some(e=>e['data-mechanism']==='monte_carlo'));
+  }
+});
+
+test('Monte Carlo opens with full fan and play replays once from zero',()=>{
+  const {context,ids,intervals}=harness(()=>{});context.testFixture=mechanismFixture('monte_carlo');
+  vm.runInContext("explanationData=testFixture;explanationTab='mechanism';renderExplanation()",context);
+  const content=ids.get('explanation-content'),range=descendants(content).find(e=>e.type==='range');
+  assert.equal(range.value,'2');
+  const play=descendants(content).find(e=>e.tagName==='button'&&e.textContent==='Play actual random steps');
+  play.listeners.click();assert.equal(range.value,'0');
+  const tick=intervals.find(Boolean);tick();assert.equal(range.value,1);tick();assert.equal(range.value,2);tick();
+  assert.equal(range.value,2);assert.equal(play.textContent,'Play actual random steps');
+  assert.ok(intervals.every(x=>x===null));
+});
+
+test('flat scenario preview is explained without fabricated movement',()=>{
+  const {context,ids}=harness(()=>{}),d=mechanismFixture('monte_carlo');
+  d.details.preview_paths=[[.41,.41,.41],[.41,.41,.41]];d.details.historical_increments=[0,0];
+  context.testFixture=d;vm.runInContext("explanationData=testFixture;explanationTab='mechanism';renderExplanation()",context);
+  const content=ids.get('explanation-content');assert.match(content.textContent,/valid flat simulation/);
+  assert.match(content.textContent,/no artificial movement or jitter/);
+  const svg=descendants(content).find(e=>e['data-mechanism']==='monte_carlo');
+  const path=descendants(svg).find(e=>e.tagName==='polyline');
+  assert.equal(new Set(path.points.split(' ').map(p=>p.split(',')[1])).size,1);
+});
+
+test('selecting a Monte Carlo path highlights the actual line and draw',()=>{
+  const {context,ids}=harness(()=>{});context.testFixture=mechanismFixture('monte_carlo');
+  vm.runInContext("explanationData=testFixture;explanationTab='mechanism';renderExplanation()",context);
+  const content=ids.get('explanation-content'),picker=descendants(content).find(e=>e['aria-label']==='Highlight actual simulated path');
+  picker.value='1';picker.listeners.change();
+  assert.match(content.textContent,/Actual path 20/);
+  assert.match(content.textContent,/draw index 1 selects -1.0000¢/);
+  assert.ok(descendants(content).some(e=>e['data-path-index']===20&&e['stroke-width']===3));
+});
+
+test('missing visualization asset produces a visible error instead of blank panel',()=>{
+  const {context,ids}=harness(()=>{});context.testFixture=fixture();context.renderModelMechanism=undefined;
+  vm.runInContext("explanationData=testFixture;explanationTab='mechanism';renderExplanation()",context);
+  assert.match(ids.get('explanation-content').textContent,/Visualization could not be rendered/);
+});
+
+test('changing tabs during loading preserves the loading message',async()=>{
+  let release;const {context,ids}=harness(()=>new Promise(resolve=>{release=resolve}));
+  const pending=context.loadExplanation('f','mean',30);
+  vm.runInContext("explanationTab='mechanism';renderExplanation()",context);
+  assert.match(ids.get('explanation-content').textContent,/Computing the exact/);
+  release({ok:true,json:async()=>fixture()});await pending;
 });

@@ -12,13 +12,15 @@ function mechanismArrow(svg,x1,y1,x2,y2,color='#657769'){
   svg.append(node('line',{x1,y1,x2,y2,stroke:color,'stroke-width':2}),
     node('circle',{cx:x2,cy:y2,r:3,fill:color}));
 }
-function mechanismReplay(parent,count,draw,label){
+function mechanismReplay(parent,count,draw,label,options={}){
   const wrapper=element('div','','ex-controls'),button=element('button',`Play ${label}`),range=element('input'),caption=element('span');
-  range.type='range';range.min='0';range.max=String(count-1);range.value='0';range.setAttribute('aria-label',label);
+  range.type='range';range.min='0';range.max=String(count-1);range.value=String(options.initial??0);range.setAttribute('aria-label',label);
+  let restart=Boolean(options.restartOnPlay);
   function update(){caption.textContent=`${Number(range.value)+1} / ${count}`;draw(Number(range.value))}
-  range.addEventListener('input',update);
-  button.addEventListener('click',()=>{if(replayTimer){clearInterval(replayTimer);replayTimer=null;button.textContent=`Play ${label}`;return}button.textContent='Pause';replayTimer=setInterval(()=>{range.value=(Number(range.value)+1)%count;update()},150)});
+  range.addEventListener('input',()=>{restart=Number(range.value)===count-1;update()});
+  button.addEventListener('click',()=>{if(replayTimer){clearInterval(replayTimer);replayTimer=null;button.textContent=`Play ${label}`;return}if(restart){range.value='0';restart=false;update()}button.textContent='Pause';replayTimer=setInterval(()=>{const next=Number(range.value)+1;if(next>=count&&options.loop===false){clearInterval(replayTimer);replayTimer=null;restart=true;button.textContent=`Play ${label}`;return}range.value=next%count;update()},150)});
   wrapper.append(button,range,caption);parent.append(wrapper);update();
+  return {redraw:update,range};
 }
 function mechanismTree(data){
   const d=data.details.kind==='forest'?data.details.path:data.details;
@@ -90,15 +92,29 @@ function mechanismMC(data){
   const d=data.details,s=section('Monte Carlo: sample possible futures','Actual bootstrap paths for this forecast. Each step draws one historical increment, then bounds the price. Quiet histories can produce overlapping paths; no jitter is added. These are scenarios, not confidence intervals.');
   const holder=element('div'),caption=element('p','','ex-muted');s.append(holder,caption);
   const paths=d.preview_paths,lo=Math.min(...paths.flat()),hi=Math.max(...paths.flat()),span=hi-lo||.01;
-  mechanismReplay(s,data.horizon+1,step=>{
+  let selectedPath=0;
+  const picker=element('select');picker.setAttribute('aria-label','Highlight actual simulated path');
+  d.preview_indices.forEach((index,i)=>{const option=element('option',`Actual path ${index}`);option.value=i;picker.append(option)});
+  picker.value='0';s.append(picker);
+  const identical=paths.every(path=>path.every((v,i)=>Math.abs(v-paths[0][i])<1e-12));
+  const flat=identical&&paths[0].every(v=>Math.abs(v-paths[0][0])<1e-12);
+  if(flat)s.append(element('p','The displayed paths overlap and stay at one price for this observed history. This is a valid flat simulation, not a broken chart; no artificial movement or jitter is added.','notice'));
+  else if(identical)s.append(element('p','The displayed sampled paths coincide. No artificial jitter is added to force them apart.','notice'));
+  const replay=mechanismReplay(s,data.horizon+1,step=>{
     holder.replaceChildren();const svg=mechanismCanvas(holder,'monte_carlo',300),x=t=>50+t/data.horizon*700,y=value=>250-(value-lo)/span*220;
-    paths.forEach((path,i)=>svg.append(node('polyline',{points:path.slice(0,step+1).map((v,t)=>`${x(t)},${y(v)}`).join(' '),fill:'none',stroke:i===0?'#b8a7df':'#b0e5a2','stroke-width':i===0?3:1,opacity:i===0?1:.24})));
-    svg.append(node('circle',{cx:x(step),cy:y(paths[0][step]),r:5,fill:'#d5bfff','aria-label':'Highlighted actual path endpoint'}));
-    const index=step?d.preview_draw_indices[0][step-1]:null;
-    caption.textContent=step?`Actual path ${d.preview_indices[0]} · second ${step} · draw index ${index} selects ${(d.historical_increments[index]*100).toFixed(4)}¢ · bounded midpoint ${(paths[0][step]*100).toFixed(4)}¢.`:`${d.path_count} seeded paths begin at the same observed midpoint. Showing ${paths.length} actual members.`;
+    paths.forEach((path,i)=>svg.append(node('polyline',{points:path.slice(0,step+1).map((v,t)=>`${x(t)},${y(v)}`).join(' '),fill:'none',stroke:i===selectedPath?'#b8a7df':'#b0e5a2','stroke-width':i===selectedPath?3:1,opacity:i===selectedPath?1:.24,'data-path-index':d.preview_indices[i]})));
+    svg.append(node('circle',{cx:x(step),cy:y(paths[selectedPath][step]),r:5,fill:'#d5bfff','aria-label':'Highlighted actual path endpoint'}));
+    const index=step?d.preview_draw_indices[selectedPath][step-1]:null;
+    caption.textContent=step?`Actual path ${d.preview_indices[selectedPath]} · second ${step} · draw index ${index} selects ${(d.historical_increments[index]*100).toFixed(4)}¢ · bounded midpoint ${(paths[selectedPath][step]*100).toFixed(4)}¢.`:`${d.path_count} seeded paths begin at the same observed midpoint. Showing ${paths.length} actual members.`;
     svg.append(node('text',{x:50,y:285},'Observed midpoint'),node('text',{x:690,y:285},`${data.horizon}s horizon`));
-  },'actual random steps');
-  renderMonteCarlo(d);
+  },'actual random steps',{initial:data.horizon,restartOnPlay:true,loop:false});
+  picker.addEventListener('change',()=>{selectedPath=Number(picker.value);replay.redraw()});
+  const convergence=section('How the scenario mean settles','Cumulative YES return over all actual simulated paths; convergence does not establish accuracy.');
+  linePlot(convergence,[{values:d.convergence_yes,color:'#b0e5a2'}],{labelX:'Number of simulated paths',labelY:'Mean net scenario return (¢)'});
+  const statistics=section('Scenario dispersion','Percentiles of simulated returns, not validated confidence intervals.');
+  tableInto(statistics,['Percentile','YES return','NO return'],['5th','50th','95th'].map((label,i)=>[label,...d.scenario_percentiles[i].map(number)]));
+  const download=element('a','Download every path and actual draw index','ex-download');
+  download.href=`/api/explanations/${data.forecast_id}/monte_carlo?horizon=${data.horizon}&download=true`;statistics.append(download);
 }
 function mechanismGRU(data){
   const d=data.details,s=section('GRU: carry a state through 60 observations','Architecture schematic, not measured hidden states or gate activations. Highlighted inputs and sensitivity values come from this actual prediction.');
