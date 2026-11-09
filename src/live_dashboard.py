@@ -2,9 +2,10 @@
 
 import argparse
 import asyncio
-from collections import deque
+from collections import deque, OrderedDict
 from contextlib import asynccontextmanager
 import copy
+import hashlib
 from io import StringIO
 import json
 from pathlib import Path
@@ -14,8 +15,10 @@ import time
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 from threadpoolctl import threadpool_limits
 
 from src.causal_swing_data import history_ends
@@ -25,6 +28,24 @@ from src.v3_research import FEATURES, overlaps, valid_rows
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def run_fingerprint(run):
+    """Content identity of weights, scalers, calibration and recorded traces."""
+    paths = [run/"protocol.json",run/"metrics.json",*sorted((run/"models").glob("*.joblib")),
+        *sorted(run.glob("gru_*/best.keras")),*sorted(run.glob("gru_*/scaler.joblib")),
+        *sorted((run/"traces").glob("*.json"))]
+    combined, manifest = hashlib.sha256(), {}
+    for path in paths:
+        if not path.is_file(): continue
+        digest=hashlib.sha256()
+        with path.open("rb") as stream:
+            for block in iter(lambda:stream.read(1024*1024),b""):
+                digest.update(block)
+        name=path.relative_to(run).as_posix()
+        manifest[name]=digest.hexdigest()
+        combined.update((name+":"+manifest[name]+"\n").encode())
+    return combined.hexdigest()[:24],manifest
 
 
 def read_tail(path, limit=1024*1024):
@@ -86,6 +107,9 @@ def corrected(raw, correction):
 class Predictor:
     def __init__(self, run):
         self.models, self.scalers, self.corrections = {}, {}, {}
+        protocol = json.loads((run/"protocol.json").read_text())
+        if protocol.get("feature_count",7) != 7:
+            raise ValueError("Live dashboard requires the seven-feature artifact; timing models are separate comparisons")
         metrics = json.loads((run / "metrics.json").read_text())
         import tensorflow as tf
         tf.config.threading.set_intra_op_parallelism_threads(2)
@@ -132,6 +156,9 @@ class Predictor:
 class Dashboard:
     def __init__(self, run, directory, predictor_factory=Predictor, feed=None):
         self.run, self.directory, self.factory = run, directory, predictor_factory
+        self.run_id,self.artifact_manifest = run_fingerprint(run)
+        self.forecasts = OrderedDict()
+        self.inference_lock = threading.RLock()
         self.feed = feed
         protocol = json.loads((run / "protocol.json").read_text())
         self.protected = json.loads((Path(protocol["source"]) / "protected_v2_period.json").read_text())
@@ -160,7 +187,15 @@ class Dashboard:
             # Never manufacture live forecasts on old or future-dated clocks.
             fresh = -2 <= age <= 30
             if fresh and key not in self.cache:
-                predictions = self.predictor.predict(item)
+                with self.inference_lock:
+                    predictions = self.predictor.predict(item)
+                forecast_id = hashlib.sha256(f"{self.run_id}|{key}".encode()).hexdigest()[:24]
+                predictions = [{**p,"forecast_id":forecast_id} for p in predictions]
+                stored = {**item,"history":item["history"].copy(),"predictions":predictions}
+                with self.lock:
+                    self.forecasts[forecast_id] = stored
+                    while len(self.forecasts) > 240:
+                        self.forecasts.popitem(last=False)
                 self.cache[key] = predictions
                 self.timeline.append({"ticker": item["ticker"], "time": item["input_end"]//10**6,
                                       "predictions": predictions})
@@ -182,6 +217,23 @@ class Dashboard:
     def snapshot(self):
         with self.lock:
             return copy.deepcopy(self.state)
+
+    def explain(self, forecast_id, model, horizon, include_all=False, tree_index=0):
+        from src.prediction_explanations import explanation
+        with self.lock:
+            item = self.forecasts.get(forecast_id)
+            if item is None:
+                raise KeyError("Forecast expired or unknown; select a current forecast")
+            item = copy.deepcopy(item)
+        with self.inference_lock:
+            if run_fingerprint(self.run)[0] != self.run_id:
+                raise ValueError("Model artifacts changed. Restart the dashboard and select a new forecast.")
+            result = explanation(self.predictor,item,model,horizon,self.run,include_all,tree_index)
+        result.update(forecast_id=forecast_id,run_id=self.run_id,model_run=self.run.name,
+            ticker=item["ticker"],session_id=item["session_id"],input_end=item["input_end"],
+            forecast_age_seconds=max(0,time.time()-item["input_end"]/1e9),historical=True)
+        result["artifact_hashes"] = self.artifact_manifest
+        return result
 
 
 def create_app(run=None, directory=None, dashboard=None, mode="kalshi", tickers=None,
@@ -213,10 +265,24 @@ def create_app(run=None, directory=None, dashboard=None, mode="kalshi", tickers=
         await asyncio.gather(*tasks, return_exceptions=True)
 
     app = FastAPI(title="Kalshi Model Lab", lifespan=lifespan)
+    app.add_middleware(GZipMiddleware,minimum_size=1024)
 
     @app.get("/api/state")
     def state():
         return engine.snapshot()
+
+    @app.get("/api/explanations/{forecast_id}/{model}")
+    def explain(forecast_id: str, model: str, horizon: int=30, download: bool=False, tree: int=0):
+        try:
+            result = engine.explain(forecast_id,model,horizon,download,tree)
+        except KeyError as error:
+            raise HTTPException(status_code=410,detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=400,detail=str(error)) from error
+        headers = {"Cache-Control":"no-store"}
+        if download:
+            headers["Content-Disposition"] = 'attachment; filename="model-explanation.json"'
+        return JSONResponse(result,headers=headers)
 
     app.mount("/", StaticFiles(directory=ROOT / "frontend", html=True), name="frontend")
     return app

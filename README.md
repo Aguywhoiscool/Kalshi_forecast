@@ -234,6 +234,50 @@ correlation between related markets. No model training or collector restart is
 performed. Give `reports/collection_computer_near_close_prompt.md` to Codex on
 the collection computer for the prepared rollout workflow.
 
+## Model explanations and training traces
+
+Click a model row in the live dashboard for its frozen-observation explanation.
+The panel shows exact prediction calculations, saved training replay where
+available, and a separately labeled interactive gradient-descent teaching demo.
+SGD shows actual recorded mini-batch updates; GRU shows actual Adam epoch/probe
+observations. A two-dimensional projection is not the full loss landscape.
+Linear contributions, tree decision paths, forest outputs and boosting stages
+reconcile with the model's raw forecast, calibration and clipping.
+
+Monte Carlo displays real seeded simulation paths, sampled historical increments,
+return distributions and convergence. Its download contains all 2,048 paths and
+draw indices; scenario dispersion is not a calibrated confidence interval.
+Explanations load lazily at `/api/explanations/{forecast_id}/{model}` with a
+30/60-second horizon. Forecast provenance is frozen; expired observations return
+an explicit error. The 240-observation cache bounds retained input history.
+
+The audited seven-input run is selected for live inference; eight-input timing
+models remain offline comparisons. Feature-schema mismatches are rejected.
+The new instrumented SGD procedure is versioned, not a claim of exact equivalence
+to the older sklearn optimizer. Existing models and reserved holdouts are retained.
+
+The paired comparison uses identical verified-timing fit/calibration/validation
+identities for seven/eight inputs. Its optional `--exclude-near` supplement removes
+only fitting examples with more than 10 and at most 60 minutes remaining, keeping
+the common calibration/validation populations. Calibration still includes that
+band, so this is fit-only exclusion, not a model never exposed to near-close data.
+The supplemental artifacts are separate from the original paired results:
+
+```powershell
+python -m src.timing_comparison --base artifacts/model_lab_traced_20261109
+python -m src.timing_comparison --base artifacts/model_lab_traced_20261109 --exclude-near
+```
+
+Verification commands:
+
+```powershell
+python -m pytest tests -q -p no:cacheprovider
+node --test tests/frontend_explanations.test.cjs
+```
+
+The frontend tests exercise DOM interactions, not visual browser layout. No
+profitable strategy has been demonstrated by the updated comparisons.
+
 ## Hourly readiness audit
 
 Windows task `KalshiResearch-ReadinessHourly` runs the offline readiness audit

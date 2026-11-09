@@ -128,10 +128,9 @@ def evaluate(model, horizon, prediction, history, meta, future, available, margi
 
 
 def regressors():
+    from src.model_traces import TracedSGD
     return {"mean": DummyRegressor(), "ridge": make_pipeline(StandardScaler(), Ridge(alpha=1.)),
-        "sgd": make_pipeline(StandardScaler(), MultiOutputRegressor(SGDRegressor(
-            loss="squared_error", alpha=.001, learning_rate="invscaling", eta0=.001,
-            max_iter=2000, tol=.001, average=True, random_state=42))),
+        "sgd": make_pipeline(StandardScaler(), TracedSGD()),
         "decision_tree": DecisionTreeRegressor(max_depth=8, min_samples_leaf=30, random_state=42),
         "random_forest": RandomForestRegressor(n_estimators=64, max_depth=12,
             min_samples_leaf=20, n_jobs=2, random_state=42),
@@ -140,22 +139,13 @@ def regressors():
 
 
 def mc_expected(histories, metadata, paths=2048):
+    from src.model_traces import simulate_mc
     predictions = {h: np.zeros((len(histories), 2)) for h in HORIZONS}
     for index, row in enumerate(metadata.itertuples()):
-        past = histories[index]
-        spread = past[-1, 1] - past[-1, 0]
-        increments = np.diff(past[:, 3])
-        mid = np.full(paths, past[-1, 3])
-        import hashlib
-        seed = int.from_bytes(hashlib.sha256(f"return42|{row.session_id}|{row.ticker}|{row.input_end}".encode()).digest()[:8], "little")
-        rng = np.random.default_rng(seed)
-        for step in range(1, 61):
-            mid = np.clip(mid + rng.choice(increments, size=paths), spread / 2, 1 - spread / 2)
-            if step == 1:
-                entry_yes, entry_no = mid + spread / 2, 1 - (mid - spread / 2)
-            if step in HORIZONS:
-                predictions[step][index] = [float(((mid - spread / 2) - entry_yes).mean() * 100 - COST),
-                    float(((1 - mid - spread / 2) - entry_no).mean() * 100 - COST)]
+        result = simulate_mc(histories[index], {"session_id": row.session_id, "ticker": row.ticker,
+            "input_end": row.input_end}, paths=paths)
+        for horizon in HORIZONS:
+            predictions[horizon][index] = result["predictions"][horizon]
     return predictions
 
 
@@ -167,7 +157,7 @@ def train_gru(histories, target, fit, cal, val, output, horizon, progress, epoch
     scaler = StandardScaler()
     for start in range(0, len(fit), 256):
         batch = histories[fit[start:start + 256]]
-        scaler.partial_fit(batch.reshape(-1, 7))
+        scaler.partial_fit(batch.reshape(-1, histories.shape[2]))
     joblib.dump(scaler, folder / "scaler.joblib")
 
     class Batches(tf.keras.utils.Sequence):
@@ -180,23 +170,40 @@ def train_gru(histories, target, fit, cal, val, output, horizon, progress, epoch
         def __getitem__(self, index):
             ids = self.ids[index * 256:(index + 1) * 256]
             raw = histories[ids]
-            x = scaler.transform(raw.reshape(-1, 7)).reshape(raw.shape).astype(np.float32)
+            x = scaler.transform(raw.reshape(-1, histories.shape[2])).reshape(raw.shape).astype(np.float32)
             return (x, (target[ids] / 100).astype(np.float32)) if self.labels else x
         def on_epoch_end(self):
             if self.shuffle:
                 self.rng.shuffle(self.ids)
 
-    model = tf.keras.Sequential([tf.keras.layers.Input((60, 7)),
+    model = tf.keras.Sequential([tf.keras.layers.Input((60, histories.shape[2])),
         tf.keras.layers.GRU(64, return_sequences=True), tf.keras.layers.Dropout(.2),
         tf.keras.layers.GRU(32), tf.keras.layers.Dropout(.2), tf.keras.layers.Dense(32, activation="relu"),
         tf.keras.layers.Dense(2)])
     model.compile(optimizer=tf.keras.optimizers.Adam(.001), loss="mse")
+    probe_ids = fit[:min(64, len(fit))]
+    probe = scaler.transform(histories[probe_ids].reshape(-1, histories.shape[2])).reshape(len(probe_ids), 60, histories.shape[2]).astype(np.float32)
+    probe_y = (target[probe_ids]/100).astype(np.float32)
+    trajectory = []
+    class GradientTrace(tf.keras.callbacks.Callback):
+        def on_epoch_end(self, epoch, logs=None):
+            with tf.GradientTape() as tape:
+                loss = tf.reduce_mean(tf.square(self.model(probe, training=False)-probe_y))
+            gradients = tape.gradient(loss, self.model.trainable_weights)
+            trajectory.append({"epoch": epoch+1, "loss": float(logs["loss"]),
+                "calibration_loss": float(logs["val_loss"]), "probe_loss": float(loss),
+                "probe_gradient_norm": float(tf.linalg.global_norm([g for g in gradients if g is not None])),
+                "selected_weights": self.model.trainable_weights[0].numpy().reshape(-1)[:2].tolist()})
     progress("training_gru", horizon=horizon, fit=len(fit), calibration=len(cal))
     model.fit(Batches(fit, True, True), validation_data=Batches(cal), epochs=epochs, verbose=2,
-        callbacks=[tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3),
+        callbacks=[GradientTrace(), tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3),
             tf.keras.callbacks.ModelCheckpoint(str(folder / "best.keras"), save_best_only=True, monitor="val_loss"),
             tf.keras.callbacks.CSVLogger(str(folder / "epochs.csv"))])
     model = tf.keras.models.load_model(folder / "best.keras")
+    (output / "traces").mkdir(exist_ok=True)
+    save_json(output / "traces" / f"gru_{horizon}.json", {"optimizer": "Adam", "steps": trajectory,
+        "selected_epoch": int(np.argmin([step["calibration_loss"] for step in trajectory]))+1,
+        "note": "Actual epoch losses, two-weight projection, and inference-mode probe gradients; not every training-batch gradient"})
     result = (model.predict(Batches(cal, False), verbose=0) * 100,
               model.predict(Batches(val, False), verbose=0) * 100)
     tf.keras.backend.clear_session()
@@ -246,6 +253,7 @@ def run(output, epochs, source=None):
         print(json.dumps(state), flush=True)
 
     protocol = {"source": str(source), "dataset_policy": "past_only_v1", "horizons": HORIZONS,
+        "sgd_algorithm": "mini_batch_sgd_v1", "mc_kernel": "src.model_traces.simulate_mc",
         "primary_cost_buffer_cents": COST, "primary_expected_net_margin_cents": 1.,
         "margins_cents": MARGINS, "cost_buffers_cents": [0, 2, 4, 5], "epochs": epochs, "seed": 42,
         "target": "Expected conservative net scenario return on one contract, including uncertain-outcome bounds",
@@ -297,6 +305,9 @@ def run(output, epochs, source=None):
                             raw_cal, raw_val = model.predict(x[cal]), model.predict(x[val])
                         training_warnings = [str(item.message) for item in captured]
                         joblib.dump(model, output / "models" / f"{name}_{horizon}.joblib")
+                        if name == "sgd":
+                            (output / "traces").mkdir(exist_ok=True)
+                            save_json(output / "traces" / f"sgd_{horizon}.json", model.steps[-1][1].trace_)
                     raw_cal, raw_val = np.clip(raw_cal, -104, 96), np.clip(raw_val, -104, 96)
                     correction = (target[cal] - raw_cal).mean(axis=0)
                     prediction = np.clip(raw_val + correction, -104, 96)
@@ -321,6 +332,8 @@ def run(output, epochs, source=None):
         progress("auditing")
         from src.audit_swing_returns import audit
         audit(output)
+        from src.audit_training_traces import audit as audit_traces
+        audit_traces(output)
         save_json(root / "artifacts/swing_return_latest.json", {"run": str(output), "report": str(output / "REPORT.md")})
         progress("complete", report=str(output / "REPORT.md"))
     except BaseException:
