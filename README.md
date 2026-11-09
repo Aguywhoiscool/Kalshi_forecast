@@ -328,5 +328,38 @@ read-only collector runs on another computer; only its data folder is synced.
 Code changes here do not update that machine automatically.
 
 The previous phase-based experiments and frozen artifacts are retained.
+
+## Return-size accuracy study
+
+The offline accuracy pipeline compares the original seven features with verified
+schedule/depth/spread features and 180-observation context. Ridge, SGD, gradient
+boosting and GRU settings are selected using three chronological development
+folds. Mean, tree, forest and separate 60/180-observation Monte Carlo controls
+remain available. SGD/GRU also compare a conservative target with interval-Huber
+training; unknown returns remain intervals rather than invented point labels.
+See [the study protocol](reports/accuracy_improvement_protocol_20261109.md).
+
+The study uses a separately frozen source and a new final period; it does not
+evaluate reserved v2/v3 outcomes. Choices and refit models are frozen before final
+labels are opened once. A consumed final period cannot serve as fresh evidence
+for later tuning. Do not start a second experiment in the active output folder.
+
+Read `artifacts/accuracy_experiment_20261109/status.json` or tail
+`artifacts/agent_status/research.log` for actual training progress. After the run
+has written `final_completed.json`, the following commands independently audit
+the artifacts and generate a report; they do not retrain or select a new winner:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.accuracy_audit --output artifacts/accuracy_experiment_20261109 --allow-final
+.\.venv\Scripts\python.exe -m src.accuracy_reporting --output artifacts/accuracy_experiment_20261109
+```
+
+Before completion, omit `--allow-final` for a development-only audit. The report
+generator requires a passed final-scope audit. Final outputs include observed
+and closed-only return errors, unknown-outcome coverage, interval diagnostics,
+seed robustness, paired event-proxy bootstrap intervals and quote-based execution
+scenarios. Improved return error can reflect spread/cost mechanics and does not
+establish direction accuracy, confirmed fills or trading profit. New feature
+schemas remain offline; the live model pointer is unchanged.
 See `reports/collector_status_fix_rollout.md` for the separately prepared collector
-status-scheduling fix. No Git commit or push is part of the benchmark workflow.
+status-scheduling fix. Research scripts never commit or push automatically.
