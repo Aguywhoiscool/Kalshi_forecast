@@ -41,12 +41,25 @@ class TracedSGD(RegressorMixin, BaseEstimator):
         return np.asarray(x) @ self.coef_.T+self.intercept_
 
 
-def simulate_mc(history, identity, paths=2048, trace=False):
+def simulate_mc(history, identity, paths=2048, trace=False, context=None):
     history = np.asarray(history, dtype=float)
     if history.shape != (60, 7) or not np.isfinite(history).all() or paths < 1:
         raise ValueError("Expected finite 60x7 history and positive path count")
     spread = history[-1, 1]-history[-1, 0]
-    increments = np.diff(history[:, 3])
+    if context is None:
+        increment_history = history
+        method_version = "bootstrap60_v1"
+    else:
+        context = np.asarray(context, dtype=float)
+        if context.shape != (180,7) or not np.isfinite(context).all():
+            raise ValueError("Long Monte Carlo context requires finite 180x7 observed history")
+        if not np.array_equal(context[-60:],history):
+            raise ValueError("Long Monte Carlo context must end in the exact baseline history")
+        from src.causal_features import _history
+        _history(context[None],180)
+        increment_history = context
+        method_version = "bootstrap180_v1"
+    increments = np.diff(increment_history[:, 3])
     seed = int.from_bytes(hashlib.sha256(
         f"return42|{identity['session_id']}|{identity['ticker']}|{identity['input_end']}".encode()).digest()[:8], "little")
     rng = np.random.default_rng(seed)
@@ -74,5 +87,7 @@ def simulate_mc(history, identity, paths=2048, trace=False):
         result.update(seed=str(seed), sampled_indices=draws.tolist(), paths=trajectory.tolist(),
             historical_increments=increments.tolist(), per_path_returns=per_path,
             spread=float(spread), path_count=paths, cost_buffer_cents=4,
+            method_version=method_version,context_observations=len(increment_history),
+            context_validation_note="Caller validates continuous timestamps and session/ticker identity; kernel validates quote values and exact suffix" if context is not None else "Original 60-observation model",
             method="Bootstrap past midpoint increments; constant spread; bounded prices; no future inputs")
     return result
