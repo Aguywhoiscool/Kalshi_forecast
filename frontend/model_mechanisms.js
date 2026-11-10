@@ -3,12 +3,12 @@ function mechanismCanvas(parent,kind,height=320){
   const svg=node('svg',{viewBox:`0 0 800 ${height}`,role:'img','data-mechanism':kind,'aria-label':`${kind} mechanism`});
   parent.append(svg);return svg;
 }
-function mechanismBox(svg,x,y,w,h,title,subtitle='',color='#b0e5a2'){
-  svg.append(node('rect',{x,y,width:w,height:h,rx:8,fill:'#18241c',stroke:color}),
+function mechanismBox(svg,x,y,w,h,title,subtitle='',color='#66d9ff'){
+  svg.append(node('rect',{x,y,width:w,height:h,rx:8,fill:'#1b2230',stroke:color}),
     node('text',{x:x+w/2,y:y+h/2-3,'text-anchor':'middle',fill:color},title),
     node('text',{x:x+w/2,y:y+h/2+15,'text-anchor':'middle'},subtitle));
 }
-function mechanismArrow(svg,x1,y1,x2,y2,color='#657769'){
+function mechanismArrow(svg,x1,y1,x2,y2,color='#5c6880'){
   svg.append(node('line',{x1,y1,x2,y2,stroke:color,'stroke-width':2}),
     node('circle',{cx:x2,cy:y2,r:3,fill:color}));
 }
@@ -31,8 +31,8 @@ function mechanismTree(data){
     const y=30+i*90;
     if(!step.leaf){
       const direction=step.direction==='left'?-1:1,next=Math.max(180,Math.min(620,x+direction*85));
-      mechanismArrow(svg,x,y+43,next,y+90,'#b0e5a2');
-      mechanismArrow(svg,x,y+43,x-direction*85,y+75,'#39453d');
+      mechanismArrow(svg,x,y+43,next,y+90,'#66d9ff');
+      mechanismArrow(svg,x,y+43,x-direction*85,y+75,'#36425a');
       svg.append(node('text',{x:x-direction*90,y:y+82,'text-anchor':'middle'},'not visited'));
       mechanismBox(svg,x-140,y,280,44,`${step.feature} ≤ ${number(step.threshold)}`,`observed ${number(step.observed)} → ${step.direction}`);
       x=next;
@@ -46,8 +46,8 @@ function mechanismForest(data){
   const d=data.details,s=section('Random forest: many trees, one average','Tree glyphs are schematic. Their numerical outputs are actual; every tree contributes equally to the raw ensemble mean.');
   const shown=d.tree_outputs.slice(0,12),svg=mechanismCanvas(s,'random_forest',360),mean=[0,1].map(side=>d.tree_outputs.reduce((v,r)=>v+r[side],0)/d.tree_outputs.length);
   shown.forEach((values,i)=>{const x=40+i*62;
-    svg.append(node('line',{x1:x+20,y1:50,x2:x+6,y2:80,stroke:'#77936f'}),node('line',{x1:x+20,y1:50,x2:x+34,y2:80,stroke:'#77936f'}),node('circle',{cx:x+20,cy:50,r:7,fill:'#b0e5a2'}),node('circle',{cx:x+6,cy:80,r:5,fill:'#708f6a'}),node('circle',{cx:x+34,cy:80,r:5,fill:'#708f6a'}),node('text',{x:x+20,y:110,'text-anchor':'middle'},`Tree ${i}`),node('text',{x:x+20,y:130,'text-anchor':'middle'},`${values[0].toFixed(1)}¢`));
-    mechanismArrow(svg,x+20,145,400,235,'#35493a');
+    svg.append(node('line',{x1:x+20,y1:50,x2:x+6,y2:80,stroke:'#7b88a0'}),node('line',{x1:x+20,y1:50,x2:x+34,y2:80,stroke:'#7b88a0'}),node('circle',{cx:x+20,cy:50,r:7,fill:'#66d9ff'}),node('circle',{cx:x+6,cy:80,r:5,fill:'#6d7a90'}),node('circle',{cx:x+34,cy:80,r:5,fill:'#6d7a90'}),node('text',{x:x+20,y:110,'text-anchor':'middle'},`Tree ${i}`),node('text',{x:x+20,y:130,'text-anchor':'middle'},`${values[0].toFixed(1)}¢`));
+    mechanismArrow(svg,x+20,145,400,235,'#33415e');
   });
   svg.append(node('text',{x:30,y:20},'Actual member YES-return estimates'));
   mechanismBox(svg,240,235,320,65,`Mean of all ${d.tree_outputs.length} trees`,`YES ${number(mean[0])}¢ · NO ${number(mean[1])}¢`);
@@ -69,12 +69,12 @@ function mechanismBoosting(data){
     }
     const prior=stages[i-1],delta=stages[i].map((v,j)=>v-prior[j]);
     mechanismBox(svg,20,75,220,70,i?'Previous prediction':'Start',`YES ${number(prior[0])}¢`);
-    mechanismBox(svg,295,75,210,70,i?`Stage ${i+1} correction`:'Initial + stage 1',`YES ${number(delta[0])}¢`,'#b8a7df');
+    mechanismBox(svg,295,75,210,70,i?`Stage ${i+1} correction`:'Initial + stage 1',`YES ${number(delta[0])}¢`,'#ffb08a');
     mechanismBox(svg,560,75,220,70,'Updated prediction',`YES ${number(stages[i][0])}¢`);
     mechanismArrow(svg,240,110,295,110);mechanismArrow(svg,505,110,560,110);
     caption.textContent=`Actual stage ${i+1}: YES ${number(prior[0])} + ${number(delta[0])} = ${number(stages[i][0])}¢; NO ${number(prior[1])} + ${number(delta[1])} = ${number(stages[i][1])}¢.`;
   },'boosting stages');
-  linePlot(s,[{values:stages.map(v=>v[0]),color:'#b0e5a2'},{values:stages.map(v=>v[1]),color:'#b8a7df'}],{labelX:'Actual boosting stage',labelY:'Cumulative raw return (¢)'});
+  linePlot(s,[{values:stages.map(v=>v[0]),color:'#66d9ff'},{values:stages.map(v=>v[1]),color:'#ffb08a'}],{labelX:'Actual boosting stage',labelY:'Cumulative raw return (¢)'});
 }
 function mechanismLinear(data){
   const d=data.details,s=section('Ridge: add signed feature contributions','Actual standardized inputs × learned coefficients. Ridge solves a regularized linear fit; this is not a fabricated gradient-descent replay.');
@@ -83,8 +83,8 @@ function mechanismLinear(data){
     {name:'Remaining features',value:ranked.slice(8).reduce((sum,f)=>sum+f.contribution[0],0)}];
   let sum=0;const bars=parts.map(p=>{const start=sum;sum+=p.value;return {...p,start,end:sum}}),all=bars.flatMap(b=>[b.start,b.end]),lo=Math.min(0,...all),hi=Math.max(0,...all),span=hi-lo||1;
   const svg=mechanismCanvas(s,'ridge',340),y=v=>270-(v-lo)/span*220;
-  svg.append(node('line',{x1:25,x2:780,y1:y(0),y2:y(0),stroke:'#58675c'}));
-  bars.forEach((b,i)=>{const x=30+i*75;svg.append(node('rect',{x,y:y(Math.max(b.start,b.end)),width:52,height:Math.max(1,Math.abs(y(b.start)-y(b.end))),fill:b.value>=0?'#b0e5a2':'#b8a7df',rx:3}),node('text',{x:x+26,y:300,'text-anchor':'middle'},i===0?'Bias':i===bars.length-1?'Rest':`Feature ${i}`),node('text',{x:x+26,y:Math.max(20,y(Math.max(b.start,b.end))-8),'text-anchor':'middle'},b.value.toFixed(2)));if(i<bars.length-1)svg.append(node('line',{x1:x+52,x2:x+75,y1:y(b.end),y2:y(b.end),stroke:'#59695d'}))});
+  svg.append(node('line',{x1:25,x2:780,y1:y(0),y2:y(0),stroke:'#4e5a70'}));
+  bars.forEach((b,i)=>{const x=30+i*75;svg.append(node('rect',{x,y:y(Math.max(b.start,b.end)),width:52,height:Math.max(1,Math.abs(y(b.start)-y(b.end))),fill:b.value>=0?'#66d9ff':'#ffb08a',rx:3}),node('text',{x:x+26,y:300,'text-anchor':'middle'},i===0?'Bias':i===bars.length-1?'Rest':`Feature ${i}`),node('text',{x:x+26,y:Math.max(20,y(Math.max(b.start,b.end))-8),'text-anchor':'middle'},b.value.toFixed(2)));if(i<bars.length-1)svg.append(node('line',{x1:x+52,x2:x+75,y1:y(b.end),y2:y(b.end),stroke:'#4e5a70'}))});
   svg.append(node('text',{x:30,y:330},`YES raw sum ${number(sum)}¢ · clipped and calibrated separately in the exact calculation`));
   tableInto(s,['Component','YES contribution','NO contribution'],[['Intercept',...d.intercept.map(number)],...ranked.map(f=>[f.name,...f.contribution.map(number)])]);
 }
@@ -102,15 +102,15 @@ function mechanismMC(data){
   else if(identical)s.append(element('p','The displayed sampled paths coincide. No artificial jitter is added to force them apart.','notice'));
   const replay=mechanismReplay(s,data.horizon+1,step=>{
     holder.replaceChildren();const svg=mechanismCanvas(holder,'monte_carlo',300),x=t=>50+t/data.horizon*700,y=value=>250-(value-lo)/span*220;
-    paths.forEach((path,i)=>svg.append(node('polyline',{points:path.slice(0,step+1).map((v,t)=>`${x(t)},${y(v)}`).join(' '),fill:'none',stroke:i===selectedPath?'#b8a7df':'#b0e5a2','stroke-width':i===selectedPath?3:1,opacity:i===selectedPath?1:.24,'data-path-index':d.preview_indices[i]})));
-    svg.append(node('circle',{cx:x(step),cy:y(paths[selectedPath][step]),r:5,fill:'#d5bfff','aria-label':'Highlighted actual path endpoint'}));
+    paths.forEach((path,i)=>svg.append(node('polyline',{points:path.slice(0,step+1).map((v,t)=>`${x(t)},${y(v)}`).join(' '),fill:'none',stroke:i===selectedPath?'#ffb08a':'#66d9ff','stroke-width':i===selectedPath?3:1,opacity:i===selectedPath?1:.24,'data-path-index':d.preview_indices[i]})));
+    svg.append(node('circle',{cx:x(step),cy:y(paths[selectedPath][step]),r:5,fill:'#ffd2bd','aria-label':'Highlighted actual path endpoint'}));
     const index=step?d.preview_draw_indices[selectedPath][step-1]:null;
     caption.textContent=step?`Actual path ${d.preview_indices[selectedPath]} · second ${step} · draw index ${index} selects ${(d.historical_increments[index]*100).toFixed(4)}¢ · bounded midpoint ${(paths[selectedPath][step]*100).toFixed(4)}¢.`:`${d.path_count} seeded paths begin at the same observed midpoint. Showing ${paths.length} actual members.`;
     svg.append(node('text',{x:50,y:285},'Observed midpoint'),node('text',{x:690,y:285},`${data.horizon}s horizon`));
   },'actual random steps',{initial:data.horizon,restartOnPlay:true,loop:false});
   picker.addEventListener('change',()=>{selectedPath=Number(picker.value);replay.redraw()});
   const convergence=section('How the scenario mean settles','Cumulative YES return over all actual simulated paths; convergence does not establish accuracy.');
-  linePlot(convergence,[{values:d.convergence_yes,color:'#b0e5a2'}],{labelX:'Number of simulated paths',labelY:'Mean net scenario return (¢)'});
+  linePlot(convergence,[{values:d.convergence_yes,color:'#66d9ff'}],{labelX:'Number of simulated paths',labelY:'Mean net scenario return (¢)'});
   const statistics=section('Scenario dispersion','Percentiles of simulated returns, not validated confidence intervals.');
   tableInto(statistics,['Percentile','YES return','NO return'],['5th','50th','95th'].map((label,i)=>[label,...d.scenario_percentiles[i].map(number)]));
   const download=element('a','Download every path and actual draw index','ex-download');
@@ -121,15 +121,15 @@ function mechanismGRU(data){
   const holder=element('div'),caption=element('p','','ex-muted');s.append(holder,caption);
   mechanismReplay(s,60,step=>{
     holder.replaceChildren();const svg=mechanismCanvas(holder,'gru',330);
-    for(let i=0;i<60;i++)svg.append(node('rect',{x:25+i*12.5,y:35,width:9,height:30,fill:i===step?'#b8a7df':i<step?'#829e78':'#303c33',rx:2}));
+    for(let i=0;i<60;i++)svg.append(node('rect',{x:25+i*12.5,y:35,width:9,height:30,fill:i===step?'#ffb08a':i<step?'#7b88a0':'#2a3446',rx:2}));
     svg.append(node('text',{x:25,y:20},'Actual 60-second input sequence'));
     const boxes=[['GRU · 64 units','Sequence of recurrent states'],['GRU · 32 units','Final recurrent state'],['Dense · 32','Learned nonlinear mapping'],['YES / NO','Two raw return estimates']];
-    boxes.forEach(([title,sub],i)=>{mechanismBox(svg,20+i*195,145,175,75,title,sub,i===3?'#b8a7df':'#b0e5a2');if(i<3)mechanismArrow(svg,195+i*195,182,215+i*195,182)});
-    mechanismArrow(svg,100,75,100,145,'#b8a7df');
-    svg.append(node('path',{d:'M 35 145 C 0 100, 175 100, 175 145',fill:'none',stroke:'#697d65','stroke-width':2}),node('text',{x:50,y:108},'recurrent state'),node('text',{x:25,y:280},'Recurrent loops and connections are schematic; no invented internal values shown.'));
+    boxes.forEach(([title,sub],i)=>{mechanismBox(svg,20+i*195,145,175,75,title,sub,i===3?'#ffb08a':'#66d9ff');if(i<3)mechanismArrow(svg,195+i*195,182,215+i*195,182)});
+    mechanismArrow(svg,100,75,100,145,'#ffb08a');
+    svg.append(node('path',{d:'M 35 145 C 0 100, 175 100, 175 145',fill:'none',stroke:'#5c6880','stroke-width':2}),node('text',{x:50,y:108},'recurrent state'),node('text',{x:25,y:280},'Recurrent loops and connections are schematic; no invented internal values shown.'));
     const input=data.input.features[step];caption.textContent=`Actual observation ${step+1}/60: bid ${(input[0]*100).toFixed(2)}¢, ask ${(input[1]*100).toFixed(2)}¢, midpoint ${(input[3]*100).toFixed(2)}¢; local sensitivity magnitude ${number(d.time_sensitivity[step])}.`;
   },'input sequence');
-  linePlot(s,[{values:d.time_sensitivity,color:'#b8a7df'}],{labelX:'Actual input observation',labelY:'Local YES-return sensitivity'});
+  linePlot(s,[{values:d.time_sensitivity,color:'#ffb08a'}],{labelX:'Actual input observation',labelY:'Local YES-return sensitivity'});
 }
 function mechanismMean(data){
   const s=section('Mean baseline: summarize training targets','Schematic aggregation, using the recorded training means. Individual training targets are not exposed here and are not fabricated.');

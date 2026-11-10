@@ -85,7 +85,8 @@ def build_scoreboard(run: Path, resamples=1000, seed=20261109) -> dict:
     horizons = {str(h): horizon_scoreboard(run, h, resamples, seed) for h in (30, 60)}
     notes = []
     if all(m["closed_mean_cents"] < 0 for h in horizons.values() for m in h["models"]):
-        notes.append("Every model's average is negative: none is profitable here.")
+        notes.append("Every model's closed-outcome average per hypothetical trade is negative: none shows a profit on known outcomes. "
+                     "Unknown outcomes remain intervals, so this is not a complete-population result.")
     else:
         notes.append("Some closed-outcome averages are not negative; unknown outcomes and costs still prevent a profit claim.")
     notes += ["Relative = model's closed-outcome average minus the cross-model average; it ranks models against each other, not against zero.",

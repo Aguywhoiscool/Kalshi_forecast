@@ -68,7 +68,8 @@ def test_hand_computed_closed_interval_and_relative_values(tmp_path):
     ranked = h30["models"]
     assert [item["rank"] for item in ranked] == list(range(1, 9))
     assert [item["model"] for item in ranked[:4]] == sorted(YES_MODELS)
-    assert board["notes"][0].startswith("Every model's average is negative")
+    assert board["notes"][0].startswith("Every model's closed-outcome average per hypothetical trade is negative")
+    assert "not a complete-population result" in board["notes"][0]
     assert board["bootstrap"] == {"resamples": 200, "unit": "session_id", "seed": 20261109, "interval": [2.5, 97.5]}
 
 
