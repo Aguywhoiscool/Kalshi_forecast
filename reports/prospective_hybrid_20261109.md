@@ -1,6 +1,8 @@
-# Prospective 60-second hybrid: frozen, waiting for new data
+# Prospective 60-second hybrid: initial frozen setup
 
-The prospective test is prepared and frozen. Its current status is **`waiting_for_fresh_data`**, with zero eligible observations and zero eligible event proxies in the initial input-only readiness check. No evaluation outcomes were opened and there are no performance results yet.
+This report preserves the initial setup and waiting snapshot. The once-only evaluation has since completed; see the [completed results](prospective_hybrid_results_20261109.md). The primary accuracy screen failed.
+
+At this initial milestone, the prospective test was prepared and frozen with status **`waiting_for_fresh_data`**, zero eligible observations and zero eligible event proxies in the input-only readiness check. Evaluation outcomes were unopened and performance results were unavailable at that time.
 
 The prospective input boundary is **2026-11-10 00:11:39.787550 UTC**, equivalent to **November 9 at 19:11:39.787550 EST**. Every evaluated 180-observation input history must begin at or after that boundary. It is the later of protocol creation and every previously consumed declared final end plus 70 seconds. Existing final periods therefore cannot be reused. Newly consumed periods are checked again before readiness and evaluation; stale pending cohorts are rejected.
 
@@ -22,7 +24,7 @@ Readiness examines past feature histories only. At least 20 actually eligible ev
 
 Initial readiness completed at 2026-11-10 00:12:26.721229 UTC: zero candidates and zero event proxies, with `outcomes_opened=false`. The new prospective boundary and 30-minute file-stability requirement mean waiting is expected. There is no unattended polling, service or scheduled job. The collector and Syncthing settings were not changed.
 
-Use these manual commands from the research workspace:
+Historical manual commands from the research workspace are shown below. The status command remains read-only; the completed run now refuses readiness/evaluation re-entry:
 
 ```powershell
 # Inspect the current state without reading outcomes:
@@ -35,7 +37,7 @@ Use these manual commands from the research workspace:
 .\.venv\Scripts\python.exe -m src.prospective_hybrid evaluate --output artifacts/prospective_hybrid_20261109
 ```
 
-The freeze command has already run; repeating it verifies the existing protocol rather than changing the boundary. Preserve the frozen code and artifacts while this test is pending.
+The freeze command has already run; repeating it verifies the existing protocol rather than changing the boundary. Preserve the frozen code and artifacts for reproducibility.
 
 ## Verification
 
