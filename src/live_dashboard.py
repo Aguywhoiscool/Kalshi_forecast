@@ -22,7 +22,8 @@ from starlette.middleware.gzip import GZipMiddleware
 from threadpoolctl import threadpool_limits
 
 from src.causal_swing_data import history_ends
-from src.model_benchmark import summarize
+from src.model_benchmark import FEATURE_NAMES, summarize
+from src.model_scoreboard import SCOREBOARD_MODELS, build_scoreboard
 from src.swing_return_experiment import MODEL_NAMES, mc_expected
 from src.v3_research import FEATURES, overlaps, valid_rows
 
@@ -94,6 +95,28 @@ def latest_histories(directory, protected, max_markets=8):
             errors.append({"file": path.name, "message": str(error)[:180]})
     values = sorted(found.values(), key=lambda item: (-item["input_end"], item["ticker"]))[:max_markets]
     return values, errors
+
+
+def evenly(count, limit):
+    """At most `limit` evenly spaced indices over range(count), keeping both ends."""
+    return np.unique(np.linspace(0, count-1, min(limit, count)).round().astype(int)) if count else np.array([], int)
+
+
+def compact_details(model, details):
+    """Bound window payload size; drops only bulky raw draws, never recomputes values."""
+    if model != "monte_carlo":
+        return details
+    keep = evenly(len(details["preview_paths"]), 32)
+    convergence = np.asarray(details["convergence_yes"], float)
+    points = evenly(len(convergence), 128)
+    compact = {key: details[key] for key in ("kind", "seed", "path_count", "scenario_percentiles", "histogram", "limitations")
+               if key in details}
+    compact.update(preview_indices=[details["preview_indices"][i] for i in keep],
+        preview_paths=[details["preview_paths"][i] for i in keep],
+        preview_returns=[details["preview_returns"][i] for i in keep],
+        convergence_yes=convergence[points].tolist(),
+        convergence_paths=(points+1).tolist())  # Paths averaged at each plotted point.
+    return compact
 
 
 def corrected(raw, correction):
@@ -168,6 +191,8 @@ class Dashboard:
             "stale_after_seconds": 30, "cost_buffer_cents": 4, "entry_margin_cents": 1,
             "disclaimer": "Research forecasts, not executable orders. Conservative return targets; no demonstrated trading edge."}
         self.predictor = None
+        self.windows_cache, self.windows_lock = OrderedDict(), threading.Lock()
+        self.scoreboard_value, self.scoreboard_lock = None, threading.Lock()
 
     def update(self):
         if self.predictor is None:
@@ -181,6 +206,9 @@ class Dashboard:
         now = time.time()
         keep = set()
         for item in items:
+            # C order like training history.npy: summarize() reductions are layout-sensitive at ~1e-16,
+            # enough to flip tree thresholds between the prediction and the stored copy explained later.
+            item = {**item, "history": np.ascontiguousarray(item["history"], dtype=float)}
             key = (item["session_id"], item["ticker"], item["input_end"])
             keep.add(key)
             age = now-item["input_end"]/1e9
@@ -235,6 +263,61 @@ class Dashboard:
         result["artifact_hashes"] = self.artifact_manifest
         return result
 
+    def windows(self, forecast_id, horizon):
+        """Every model's actual explanation for one forecast; one model's failure is isolated."""
+        from src.prediction_explanations import explanation
+        if horizon not in (30, 60):
+            raise ValueError("Horizon must be 30 or 60")
+        key = (forecast_id, horizon)
+        # Expiry and artifact checks run before the cache so cached payloads never outlive either.
+        with self.lock:
+            item = self.forecasts.get(forecast_id)
+            if item is None:
+                raise KeyError("Forecast expired or unknown; select a current forecast")
+            item = copy.deepcopy(item)
+        if run_fingerprint(self.run)[0] != self.run_id:
+            raise ValueError("Model artifacts changed. Restart the dashboard and select a new forecast.")
+        with self.windows_lock:
+            if key in self.windows_cache:
+                self.windows_cache.move_to_end(key)
+                return copy.deepcopy(self.windows_cache[key])
+        history = np.asarray(item["history"], float)
+        models, errors = {}, {}
+        with self.inference_lock:
+            for model in SCOREBOARD_MODELS:
+                try:
+                    result = explanation(self.predictor, item, model, horizon, self.run)
+                    models[model] = {"calculation": result["calculation"],
+                                     "details": compact_details(model, result["details"])}
+                except Exception as error:  # Includes failed prediction/explanation parity assertions.
+                    errors[model] = f"{type(error).__name__}: {str(error)[:300]}"
+        payload = {"forecast_id": forecast_id, "ticker": item["ticker"], "session_id": item["session_id"],
+            "horizon": horizon, "input_end": item["input_end"], "model_run": self.run.name, "run_id": self.run_id,
+            "input": {"features": history.tolist(), "summary_names": list(FEATURE_NAMES),
+                      "summary_values": summarize(history[None])[0].tolist()},
+            "models": models, "errors": errors,
+            "disclaimer": "Actual saved model calculations for one historical forecast. Not orders; no demonstrated trading edge."}
+        if errors:  # Failures may be transient (e.g. a file mid-sync); retry on the next request.
+            return copy.deepcopy(payload)
+        with self.windows_lock:
+            self.windows_cache[key] = payload
+            self.windows_cache.move_to_end(key)
+            while len(self.windows_cache) > 32:
+                self.windows_cache.popitem(last=False)
+        return copy.deepcopy(payload)
+
+    def scoreboard(self):
+        """Lazily computed relative leaderboard; failures are not cached.
+
+        Refuses (like explanations) once the run's artifacts differ from the ones loaded at startup."""
+        with self.scoreboard_lock:
+            if run_fingerprint(self.run)[0] != self.run_id:
+                self.scoreboard_value = None
+                raise ValueError("Model artifacts changed. Restart the dashboard.")
+            if self.scoreboard_value is None or self.scoreboard_value[0] != self.run_id:
+                self.scoreboard_value = (self.run_id, {**build_scoreboard(self.run), "run_id": self.run_id})
+            return copy.deepcopy(self.scoreboard_value[1])
+
 
 def create_app(run=None, directory=None, dashboard=None, mode="kalshi", tickers=None,
                rescan_seconds=600, min_close_minutes=10):
@@ -283,6 +366,26 @@ def create_app(run=None, directory=None, dashboard=None, mode="kalshi", tickers=
         if download:
             headers["Content-Disposition"] = 'attachment; filename="model-explanation.json"'
         return JSONResponse(result,headers=headers)
+
+    @app.get("/api/windows/{forecast_id}")
+    def windows(forecast_id: str, horizon: str="30"):
+        if horizon not in ("30","60"):
+            raise HTTPException(status_code=400,detail="Horizon must be 30 or 60")
+        try:
+            result = engine.windows(forecast_id,int(horizon))
+        except KeyError as error:
+            raise HTTPException(status_code=410,detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=400,detail=str(error)) from error
+        return JSONResponse(result,headers={"Cache-Control":"no-store"})
+
+    @app.get("/api/scoreboard")
+    def scoreboard():
+        try:
+            result = engine.scoreboard()
+        except Exception as error:
+            raise HTTPException(status_code=503,detail=f"Scoreboard unavailable: {str(error)[:250]}") from error
+        return JSONResponse(result,headers={"Cache-Control":"no-store"})
 
     app.mount("/", StaticFiles(directory=ROOT / "frontend", html=True), name="frontend")
     return app
